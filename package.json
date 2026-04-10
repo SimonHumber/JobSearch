@@ -1,0 +1,11 @@
+{
+  "name": "job-search-root",
+  "private": true,
+  "scripts": {
+    "dev": "npm run dev --prefix frontend",
+    "build": "npm run build --prefix frontend",
+    "lint": "npm run lint --prefix frontend",
+    "preview": "npm run preview --prefix frontend",
+    "dev:api": "cd backend && .venv/bin/python dev.py"
+  }
+}
