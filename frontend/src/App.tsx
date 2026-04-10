@@ -3,7 +3,12 @@ import { searchJobs } from './api/jobs';
 import { JobDetailPanel } from './components/JobDetailPanel';
 import { JobListItem } from './components/JobListItem';
 import { MobileJobDetailSheet } from './components/MobileJobDetailSheet';
-import { RESULTS_PER_PAGE } from './constants/pagination';
+import {
+  clampJsearchNumPages,
+  JSEARCH_NUM_PAGES_MAX,
+  JSEARCH_NUM_PAGES_MIN,
+  RESULTS_PER_PAGE,
+} from './constants/pagination';
 import { jobKey } from './lib/jobKey';
 import {
   loadPersistedJobSearch,
@@ -22,9 +27,11 @@ export default function App() {
     initialPersisted.selectedKey
   );
   const [listPage, setListPage] = useState(initialPersisted.listPage);
+  const [fetchNumPages, setFetchNumPages] = useState(initialPersisted.fetchNumPages);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
+  const [mobileSearchExpanded, setMobileSearchExpanded] = useState(true);
   const isDesktop = useMediaQuery('(min-width: 1024px)');
 
   const totalListPages = Math.max(1, Math.ceil(jobs.length / RESULTS_PER_PAGE));
@@ -89,15 +96,24 @@ export default function App() {
       jobs,
       selectedKey,
       listPage,
+      fetchNumPages,
     });
-  }, [jobTitleInput, locationInput, jobs, selectedKey, listPage]);
+  }, [jobTitleInput, locationInput, jobs, selectedKey, listPage, fetchNumPages]);
+
+  useEffect(() => {
+    if (error && !isDesktop) {
+      setMobileSearchExpanded(true);
+    }
+  }, [error, isDesktop]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
     setLoading(true);
     try {
-      const res = await searchJobs(jobTitleInput, locationInput);
+      const res = await searchJobs(jobTitleInput, locationInput, {
+        numPages: clampJsearchNumPages(fetchNumPages),
+      });
       setJobs(res.jobs ?? []);
       setListPage(1);
     } catch (err) {
@@ -117,12 +133,29 @@ export default function App() {
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl dark:text-white">
             Job search
           </h1>
-          <p className="mt-1 text-sm text-slate-600 sm:mt-2 sm:text-base dark:text-slate-400">
+          <p className="mt-1 hidden text-sm text-slate-600 sm:mt-2 sm:text-base lg:block dark:text-slate-400">
             Search by role and location. Results come from JSearch (Google for Jobs aggregate).
           </p>
+          {!isDesktop && (
+            <button
+              type="button"
+              id="search-settings-toggle"
+              aria-expanded={mobileSearchExpanded}
+              aria-controls="search-settings-form"
+              onClick={() => setMobileSearchExpanded((open) => !open)}
+              className="mt-2 flex w-full items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50/90 px-3 py-1.5 text-left text-xs font-medium text-slate-800 shadow-sm transition hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-800/80 dark:text-slate-100 dark:hover:bg-slate-800"
+            >
+              <span>Search settings</span>
+              <span className="text-slate-500 dark:text-slate-400" aria-hidden>
+                {mobileSearchExpanded ? '\u25B2' : '\u25BC'}
+              </span>
+            </button>
+          )}
+          {(isDesktop || mobileSearchExpanded) && (
           <form
+            id="search-settings-form"
             onSubmit={handleSubmit}
-            className="mt-5 flex flex-col gap-3 sm:mt-6 sm:flex-row sm:items-end sm:gap-4"
+            className={`flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:gap-4 ${isDesktop ? 'mt-5 sm:mt-6' : 'mt-3'}`}
           >
             <label className="flex flex-1 flex-col gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-300">
               Job title or keywords
@@ -144,6 +177,33 @@ export default function App() {
                 className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-base text-slate-900 shadow-sm outline-none ring-slate-400/30 placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 sm:py-2.5"
               />
             </label>
+            <label className="flex w-full flex-col gap-1.5 text-sm font-medium text-slate-700 sm:w-[8.5rem] sm:shrink-0 dark:text-slate-300">
+              <span className="leading-tight">API pages</span>
+              <span className="text-xs font-normal text-slate-500 dark:text-slate-400">
+                JSearch batches (~10 jobs/page, max {JSEARCH_NUM_PAGES_MAX})
+              </span>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={JSEARCH_NUM_PAGES_MIN}
+                max={JSEARCH_NUM_PAGES_MAX}
+                step={1}
+                value={fetchNumPages}
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  if (raw === '') {
+                    setFetchNumPages(JSEARCH_NUM_PAGES_MIN);
+                    return;
+                  }
+                  const n = Number.parseInt(raw, 10);
+                  if (!Number.isFinite(n)) return;
+                  setFetchNumPages(clampJsearchNumPages(n));
+                }}
+                onBlur={() => setFetchNumPages((p) => clampJsearchNumPages(p))}
+                className="no-input-spinner rounded-lg border border-slate-300 bg-white px-3 py-2 text-base text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 sm:py-2.5"
+                aria-label="Number of JSearch API pages to fetch (1–50)"
+              />
+            </label>
             <button
               type="submit"
               disabled={loading}
@@ -152,6 +212,7 @@ export default function App() {
               {loading ? 'Searching…' : 'Search'}
             </button>
           </form>
+          )}
         </div>
       </header>
 

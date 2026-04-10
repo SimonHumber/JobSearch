@@ -1,4 +1,8 @@
-import { RESULTS_PER_PAGE } from '../constants/pagination';
+import {
+  clampJsearchNumPages,
+  JSEARCH_FETCH_NUM_PAGES,
+  RESULTS_PER_PAGE,
+} from '../constants/pagination';
 import type { Job } from '../types/job';
 import { jobKey } from './jobKey';
 
@@ -11,6 +15,8 @@ export interface PersistedJobSearchState {
   selectedKey: string | null;
   /** 1-based index for client-side list pagination. */
   listPage: number;
+  /** JSearch `num_pages` sent with each search (1–50). */
+  fetchNumPages: number;
 }
 
 const defaults: PersistedJobSearchState = {
@@ -19,6 +25,7 @@ const defaults: PersistedJobSearchState = {
   jobs: [],
   selectedKey: null,
   listPage: 1,
+  fetchNumPages: JSEARCH_FETCH_NUM_PAGES,
 };
 
 function normalizeListPage(jobCount: number, raw: unknown): number {
@@ -46,6 +53,13 @@ function normalizeSelectedKey(
   return pickFirstWhenMissing ? jobKey(jobs[0], 0) : null;
 }
 
+function normalizeFetchNumPages(raw: unknown): number {
+  if (typeof raw !== 'number' || !Number.isFinite(raw)) {
+    return JSEARCH_FETCH_NUM_PAGES;
+  }
+  return clampJsearchNumPages(raw);
+}
+
 export function loadPersistedJobSearch(): PersistedJobSearchState {
   if (typeof localStorage === 'undefined') return { ...defaults };
   try {
@@ -71,6 +85,7 @@ export function loadPersistedJobSearch(): PersistedJobSearchState {
       jobs,
       selectedKey: normalizeSelectedKey(jobs, selectedKey, autoSelectFirstJob()),
       listPage: normalizeListPage(jobs.length, o.listPage),
+      fetchNumPages: normalizeFetchNumPages(o.fetchNumPages),
     };
   } catch {
     return { ...defaults };
@@ -87,6 +102,7 @@ export function savePersistedJobSearch(state: PersistedJobSearchState): void {
       jobs: state.jobs,
       selectedKey: state.selectedKey,
       listPage: state.listPage,
+      fetchNumPages: state.fetchNumPages,
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
   } catch {

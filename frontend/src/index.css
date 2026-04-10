@@ -18,3 +18,13 @@ body {
   max-height: 100dvh;
   min-height: 0;
 }
+
+/* Hide browser default increment/decrement on number inputs */
+input.no-input-spinner {
+  -moz-appearance: textfield;
+}
+input.no-input-spinner::-webkit-outer-spin-button,
+input.no-input-spinner::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
