@@ -23,7 +23,7 @@ export async function searchJobs(
   const title = jobTitle.trim();
   const loc = location.trim();
   if (!title && !loc) {
-    return { jobs: [], count: 0 };
+    return { jobs: [] };
   }
 
   const page = options.page ?? 1;

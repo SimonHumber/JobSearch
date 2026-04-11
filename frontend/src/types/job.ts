@@ -30,5 +30,4 @@ export interface Job {
 
 export interface JobsSearchResponse {
   jobs: Job[];
-  count: number;
 }

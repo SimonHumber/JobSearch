@@ -178,19 +178,6 @@ def extract_apply_options(raw: dict[str, Any]) -> list[dict[str, str]]:
     return out
 
 
-def raw_job_from_jsearch_detail_payload(payload: Any) -> dict[str, Any]:
-    if not isinstance(payload, dict):
-        return {}
-    data = payload.get("data")
-    if isinstance(data, dict):
-        return data
-    if isinstance(data, list) and data and isinstance(data[0], dict):
-        return data[0]
-    if payload.get("job_id") is not None or payload.get("job_title"):
-        return payload
-    return {}
-
-
 def format_posted_display(raw: dict[str, Any]) -> str | None:
     iso = raw.get("job_posted_at_datetime_utc")
     if not iso or not str(iso).strip():

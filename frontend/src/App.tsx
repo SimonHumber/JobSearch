@@ -129,13 +129,10 @@ export default function App() {
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
       <header className="shrink-0 border-b border-slate-200/80 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80">
-        <div className="mx-auto max-w-6xl px-4 py-5 sm:py-6">
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl dark:text-white">
+        <div className="mx-auto max-w-6xl px-4 pb-4 pt-3 sm:pb-6 sm:pt-6">
+          <h1 className="text-2xl font-bold leading-tight tracking-tight text-slate-900 sm:text-3xl sm:leading-tight lg:leading-normal dark:text-white">
             Job search
           </h1>
-          <p className="mt-1 hidden text-sm text-slate-600 sm:mt-2 sm:text-base lg:block dark:text-slate-400">
-            Search by role and location. Results come from JSearch (Google for Jobs aggregate).
-          </p>
           {!isDesktop && (
             <button
               type="button"
@@ -143,7 +140,7 @@ export default function App() {
               aria-expanded={mobileSearchExpanded}
               aria-controls="search-settings-form"
               onClick={() => setMobileSearchExpanded((open) => !open)}
-              className="mt-2 flex w-full items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50/90 px-3 py-1.5 text-left text-xs font-medium text-slate-800 shadow-sm transition hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-800/80 dark:text-slate-100 dark:hover:bg-slate-800"
+              className="mt-9 flex w-full items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50/90 px-3 py-1.5 text-left text-xs font-medium text-slate-800 shadow-sm transition hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-800/80 dark:text-slate-100 dark:hover:bg-slate-800"
             >
               <span>Search settings</span>
               <span className="text-slate-500 dark:text-slate-400" aria-hidden>
@@ -152,66 +149,64 @@ export default function App() {
             </button>
           )}
           {(isDesktop || mobileSearchExpanded) && (
-          <form
-            id="search-settings-form"
-            onSubmit={handleSubmit}
-            className={`flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:gap-4 ${isDesktop ? 'mt-5 sm:mt-6' : 'mt-3'}`}
-          >
-            <label className="flex flex-1 flex-col gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-300">
-              Job title or keywords
-              <input
-                type="text"
-                value={jobTitleInput}
-                onChange={(e) => setJobTitleInput(e.target.value)}
-                placeholder="e.g. React developer"
-                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-base text-slate-900 shadow-sm outline-none ring-slate-400/30 placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 sm:py-2.5"
-              />
-            </label>
-            <label className="flex flex-1 flex-col gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-300">
-              Location
-              <input
-                type="text"
-                value={locationInput}
-                onChange={(e) => setLocationInput(e.target.value)}
-                placeholder="e.g. Toronto, Ontario"
-                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-base text-slate-900 shadow-sm outline-none ring-slate-400/30 placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 sm:py-2.5"
-              />
-            </label>
-            <label className="flex w-full flex-col gap-1.5 text-sm font-medium text-slate-700 sm:w-[8.5rem] sm:shrink-0 dark:text-slate-300">
-              <span className="leading-tight">API pages</span>
-              <span className="text-xs font-normal text-slate-500 dark:text-slate-400">
-                JSearch batches (~10 jobs/page, max {JSEARCH_NUM_PAGES_MAX})
-              </span>
-              <input
-                type="number"
-                inputMode="numeric"
-                min={JSEARCH_NUM_PAGES_MIN}
-                max={JSEARCH_NUM_PAGES_MAX}
-                step={1}
-                value={fetchNumPages}
-                onChange={(e) => {
-                  const raw = e.target.value;
-                  if (raw === '') {
-                    setFetchNumPages(JSEARCH_NUM_PAGES_MIN);
-                    return;
-                  }
-                  const n = Number.parseInt(raw, 10);
-                  if (!Number.isFinite(n)) return;
-                  setFetchNumPages(clampJsearchNumPages(n));
-                }}
-                onBlur={() => setFetchNumPages((p) => clampJsearchNumPages(p))}
-                className="no-input-spinner rounded-lg border border-slate-300 bg-white px-3 py-2 text-base text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 sm:py-2.5"
-                aria-label="Number of JSearch API pages to fetch (1–50)"
-              />
-            </label>
-            <button
-              type="submit"
-              disabled={loading}
-              className="rounded-lg bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60 sm:mb-0.5"
+            <form
+              id="search-settings-form"
+              onSubmit={handleSubmit}
+              className={`flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:gap-4 ${isDesktop ? 'mt-5 sm:mt-6' : 'mt-3'}`}
             >
-              {loading ? 'Searching…' : 'Search'}
-            </button>
-          </form>
+              <label className="flex flex-1 flex-col gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-300">
+                Job title or keywords
+                <input
+                  type="text"
+                  value={jobTitleInput}
+                  onChange={(e) => setJobTitleInput(e.target.value)}
+                  placeholder="e.g. React developer"
+                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-base text-slate-900 shadow-sm outline-none ring-slate-400/30 placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 sm:py-2.5"
+                />
+              </label>
+              <label className="flex flex-1 flex-col gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-300">
+                Location
+                <input
+                  type="text"
+                  value={locationInput}
+                  onChange={(e) => setLocationInput(e.target.value)}
+                  placeholder="e.g. Toronto, Ontario"
+                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-base text-slate-900 shadow-sm outline-none ring-slate-400/30 placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 sm:py-2.5"
+                />
+              </label>
+              <label className="flex w-full flex-col gap-1.5 text-sm font-medium text-slate-700 sm:w-[8.5rem] sm:shrink-0 dark:text-slate-300">
+                <span className="leading-tight">API pages (1-50)</span>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min={JSEARCH_NUM_PAGES_MIN}
+                  max={JSEARCH_NUM_PAGES_MAX}
+                  step={1}
+                  placeholder="1-50"
+                  value={fetchNumPages}
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    if (raw === '') {
+                      setFetchNumPages(JSEARCH_NUM_PAGES_MIN);
+                      return;
+                    }
+                    const n = Number.parseInt(raw, 10);
+                    if (!Number.isFinite(n)) return;
+                    setFetchNumPages(clampJsearchNumPages(n));
+                  }}
+                  onBlur={() => setFetchNumPages((p) => clampJsearchNumPages(p))}
+                  className="no-input-spinner rounded-lg border border-slate-300 bg-white px-3 py-2 text-base text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 sm:py-2.5"
+                  aria-label="API pages to fetch, from 1 to 50"
+                />
+              </label>
+              <button
+                type="submit"
+                disabled={loading}
+                className="rounded-lg bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60 sm:mb-0.5"
+              >
+                {loading ? 'Searching…' : 'Search'}
+              </button>
+            </form>
           )}
         </div>
       </header>

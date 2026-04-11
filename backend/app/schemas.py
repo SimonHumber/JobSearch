@@ -32,8 +32,3 @@ class JobOut(BaseModel):
 
 class JobsSearchResponse(BaseModel):
     jobs: list[JobOut]
-    count: int = Field(description="Number of jobs returned in this response")
-
-
-class ApplyOptionsResponse(BaseModel):
-    applyOptions: list[ApplyOptionOut] = Field(default_factory=list)
