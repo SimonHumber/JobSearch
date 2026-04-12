@@ -18,9 +18,15 @@ interface MobileJobDetailSheetProps {
   job: Job | null;
   open: boolean;
   onClose: () => void;
+  summariesLoading?: boolean;
 }
 
-export function MobileJobDetailSheet({ job, open, onClose }: MobileJobDetailSheetProps) {
+export function MobileJobDetailSheet({
+  job,
+  open,
+  onClose,
+  summariesLoading = false,
+}: MobileJobDetailSheetProps) {
   const headingId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
   const enterInnerRafRef = useRef(0);
@@ -166,6 +172,31 @@ export function MobileJobDetailSheet({ job, open, onClose }: MobileJobDetailShee
             <p className="text-xs text-slate-500 dark:text-slate-400">Listing source: {source}</p>
           )}
         </div>
+        {(summariesLoading || job.aiSummary || job.aiSummaryError) && (
+          <section
+            aria-label="AI-generated summary"
+            className="mt-4 rounded-lg border border-indigo-200/80 bg-indigo-50/90 px-3 py-3 dark:border-indigo-500/30 dark:bg-indigo-950/40"
+          >
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-indigo-800 dark:text-indigo-200">
+              AI summary
+            </h3>
+            {summariesLoading && !job.aiSummary && !job.aiSummaryError ? (
+              <p className="mt-2 text-sm text-indigo-900/80 dark:text-indigo-100/80">
+                Generating summary…
+              </p>
+            ) : null}
+            {job.aiSummaryError ? (
+              <p className="mt-2 text-sm text-red-700 dark:text-red-300" role="alert">
+                {job.aiSummaryError}
+              </p>
+            ) : null}
+            {job.aiSummary ? (
+              <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-slate-800 dark:text-slate-200">
+                {job.aiSummary}
+              </p>
+            ) : null}
+          </section>
+        )}
         <h3 className="sr-only">Job description</h3>
         <p className="mt-4 whitespace-pre-wrap text-sm leading-relaxed text-slate-700 dark:text-slate-300">
           {jobDescription(job)}

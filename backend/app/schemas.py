@@ -32,3 +32,22 @@ class JobOut(BaseModel):
 
 class JobsSearchResponse(BaseModel):
     jobs: list[JobOut]
+
+
+class JobDescriptionIn(BaseModel):
+    id: str
+    description: str
+
+
+class SummarizeJobsRequest(BaseModel):
+    jobs: list[JobDescriptionIn]
+
+
+class JobSummaryOut(BaseModel):
+    id: str
+    summary: str
+    error: str | None = None
+
+
+class SummarizeJobsResponse(BaseModel):
+    summaries: list[JobSummaryOut]

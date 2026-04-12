@@ -13,9 +13,14 @@ import {
 
 interface JobDetailPanelProps {
   job: Job | null;
+  /** True while the batch Groq request for this search is in flight. */
+  summariesLoading?: boolean;
 }
 
-export function JobDetailPanel({ job }: JobDetailPanelProps) {
+export function JobDetailPanel({
+  job,
+  summariesLoading = false,
+}: JobDetailPanelProps) {
   const [applyOpen, setApplyOpen] = useState(false);
 
   useEffect(() => {
@@ -80,6 +85,31 @@ export function JobDetailPanel({ job }: JobDetailPanelProps) {
         options={applyOptions}
       />
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4 sm:px-8 sm:py-6">
+        {(summariesLoading || job.aiSummary || job.aiSummaryError) && (
+          <section
+            aria-label="AI-generated summary"
+            className="mb-6 rounded-lg border border-indigo-200/80 bg-indigo-50/90 px-4 py-3 dark:border-indigo-500/30 dark:bg-indigo-950/40"
+          >
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-indigo-800 dark:text-indigo-200">
+              AI summary
+            </h3>
+            {summariesLoading && !job.aiSummary && !job.aiSummaryError ? (
+              <p className="mt-2 text-sm text-indigo-900/80 dark:text-indigo-100/80">
+                Generating summary…
+              </p>
+            ) : null}
+            {job.aiSummaryError ? (
+              <p className="mt-2 text-sm text-red-700 dark:text-red-300" role="alert">
+                {job.aiSummaryError}
+              </p>
+            ) : null}
+            {job.aiSummary ? (
+              <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-slate-800 dark:text-slate-200">
+                {job.aiSummary}
+              </p>
+            ) : null}
+          </section>
+        )}
         <h3 className="sr-only">Job description</h3>
         <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700 dark:text-slate-300">
           {jobDescription(job)}

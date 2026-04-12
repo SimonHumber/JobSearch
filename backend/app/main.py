@@ -5,8 +5,14 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
+from app.groq_summarize import summarize_job_descriptions
 from app.normalize import normalize_job
-from app.schemas import JobOut, JobsSearchResponse
+from app.schemas import (
+    JobOut,
+    JobsSearchResponse,
+    SummarizeJobsRequest,
+    SummarizeJobsResponse,
+)
 
 _settings = get_settings()
 _cors_origins = [o.strip() for o in _settings.cors_origins.split(",") if o.strip()]
@@ -90,3 +96,28 @@ async def search_jobs(
         jobs.append(JobOut.model_validate(normalized))
 
     return JobsSearchResponse(jobs=jobs)
+
+
+_MAX_SUMMARIZE_JOBS = 300
+
+
+@app.post("/api/jobs/summarize-descriptions", response_model=SummarizeJobsResponse)
+async def summarize_job_postings(body: SummarizeJobsRequest) -> SummarizeJobsResponse:
+    settings = get_settings()
+    key = settings.groq_api_key.strip()
+    if not key:
+        raise HTTPException(
+            status_code=503,
+            detail="GROQ_API_KEY is not configured on the server.",
+        )
+    if len(body.jobs) > _MAX_SUMMARIZE_JOBS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"At most {_MAX_SUMMARIZE_JOBS} jobs per request (got {len(body.jobs)}).",
+        )
+    summaries = await summarize_job_descriptions(
+        body.jobs,
+        api_key=key,
+        model=settings.groq_model.strip(),
+    )
+    return SummarizeJobsResponse(summaries=summaries)

@@ -26,6 +26,9 @@ export interface Job {
   jobLocation?: string | null;
   employerName?: string | null;
   applyOptions?: ApplyOption[];
+  /** Filled after POST /api/jobs/summarize-descriptions (client-side only). */
+  aiSummary?: string | null;
+  aiSummaryError?: string | null;
 }
 
 export interface JobsSearchResponse {

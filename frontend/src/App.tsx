@@ -1,5 +1,12 @@
-import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
-import { searchJobs } from './api/jobs';
+import {
+  FormEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { searchJobs, summarizeJobDescriptions } from './api/jobs';
 import { JobDetailPanel } from './components/JobDetailPanel';
 import { JobListItem } from './components/JobListItem';
 import { MobileJobDetailSheet } from './components/MobileJobDetailSheet';
@@ -29,10 +36,13 @@ export default function App() {
   const [listPage, setListPage] = useState(initialPersisted.listPage);
   const [fetchNumPages, setFetchNumPages] = useState(initialPersisted.fetchNumPages);
   const [loading, setLoading] = useState(false);
+  const [summariesLoading, setSummariesLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [summariesError, setSummariesError] = useState<string | null>(null);
   const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
   const [mobileSearchExpanded, setMobileSearchExpanded] = useState(true);
   const isDesktop = useMediaQuery('(min-width: 1024px)');
+  const summarizeGeneration = useRef(0);
 
   const totalListPages = Math.max(1, Math.ceil(jobs.length / RESULTS_PER_PAGE));
   const listOffset = (listPage - 1) * RESULTS_PER_PAGE;
@@ -109,20 +119,68 @@ export default function App() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
+    setSummariesError(null);
     setLoading(true);
+    let list: Job[] = [];
     try {
       const res = await searchJobs(jobTitleInput, locationInput, {
         numPages: clampJsearchNumPages(fetchNumPages),
       });
-      setJobs(res.jobs ?? []);
+      list = res.jobs ?? [];
+      setJobs(list);
       setListPage(1);
     } catch (err) {
       setJobs([]);
       setSelectedKey(null);
       setListPage(1);
       setError(err instanceof Error ? err.message : 'Something went wrong.');
+      return;
     } finally {
       setLoading(false);
+    }
+
+    if (list.length === 0) {
+      return;
+    }
+
+    const batchId = ++summarizeGeneration.current;
+    setSummariesLoading(true);
+    try {
+      const summaries = await summarizeJobDescriptions(
+        list.map((j) => ({ id: j.id, description: j.description }))
+      );
+      if (summarizeGeneration.current !== batchId) {
+        return;
+      }
+      const byId = new Map(summaries.map((s) => [s.id, s]));
+      setJobs((prev) =>
+        prev.map((j) => {
+          const s = byId.get(j.id);
+          if (!s) {
+            return {
+              ...j,
+              aiSummary: null,
+              aiSummaryError: 'No summary returned for this job.',
+            };
+          }
+          return {
+            ...j,
+            aiSummary: s.summary || null,
+            aiSummaryError: s.error,
+          };
+        })
+      );
+    } catch (err) {
+      if (summarizeGeneration.current !== batchId) {
+        return;
+      }
+      setSummariesError(
+        err instanceof Error ? err.message : 'AI summaries could not be loaded.'
+      );
+    } finally {
+      if (summarizeGeneration.current === batchId) {
+        setSummariesLoading(false);
+      }
     }
   }
 
@@ -220,6 +278,14 @@ export default function App() {
             {error}
           </div>
         )}
+        {summariesError && (
+          <div
+            role="alert"
+            className="mb-3 shrink-0 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-100"
+          >
+            {summariesError}
+          </div>
+        )}
 
         {!loading && !error && jobs.length === 0 && (
           <div className="flex flex-1 items-center justify-center px-4 py-8">
@@ -292,7 +358,10 @@ export default function App() {
                 id="job-detail-panel"
                 aria-label="Job description"
               >
-                <JobDetailPanel job={selectedJob} />
+                <JobDetailPanel
+                  job={selectedJob}
+                  summariesLoading={summariesLoading}
+                />
               </div>
             </div>
             {!isDesktop && (
@@ -300,6 +369,7 @@ export default function App() {
                 job={selectedJob}
                 open={mobileDetailOpen}
                 onClose={() => setMobileDetailOpen(false)}
+                summariesLoading={summariesLoading}
               />
             )}
           </div>

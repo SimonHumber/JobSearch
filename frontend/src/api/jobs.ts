@@ -1,5 +1,11 @@
 import { JSEARCH_FETCH_NUM_PAGES } from '../constants/pagination';
-import type { JobsSearchResponse } from '../types/job';
+import type { Job, JobsSearchResponse } from '../types/job';
+
+export interface JobSummaryResult {
+  id: string;
+  summary: string;
+  error: string | null;
+}
 
 function buildParams(jobTitle: string, location: string, page = 1, numPages = JSEARCH_FETCH_NUM_PAGES) {
   const params = new URLSearchParams({
@@ -50,4 +56,37 @@ export async function searchJobs(
   }
 
   return res.json() as Promise<JobsSearchResponse>;
+}
+
+export async function summarizeJobDescriptions(
+  jobs: Pick<Job, 'id' | 'description'>[]
+): Promise<JobSummaryResult[]> {
+  if (jobs.length === 0) {
+    return [];
+  }
+  const url = `${apiBase()}/api/jobs/summarize-descriptions`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify({
+      jobs: jobs.map((j) => ({ id: j.id, description: j.description })),
+    }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    let detail = `Summary request failed (${res.status})`;
+    try {
+      const body = JSON.parse(text) as { detail?: unknown };
+      if (typeof body.detail === 'string') {
+        detail = body.detail;
+      }
+    } catch {
+      if (text) detail = text.slice(0, 500);
+    }
+    throw new Error(detail);
+  }
+
+  const data = (await res.json()) as { summaries?: JobSummaryResult[] };
+  return Array.isArray(data.summaries) ? data.summaries : [];
 }
