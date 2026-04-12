@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { Job } from '../types/job';
 import { ApplyOptionsModal } from './ApplyOptionsModal';
 import {
@@ -15,17 +15,29 @@ interface JobDetailPanelProps {
   job: Job | null;
   /** True while the batch Groq request for this search is in flight. */
   summariesLoading?: boolean;
+  /** When this changes (e.g. selected listing), description panel scrolls to top. */
+  scrollResetKey?: string | null;
 }
 
 export function JobDetailPanel({
   job,
   summariesLoading = false,
+  scrollResetKey = null,
 }: JobDetailPanelProps) {
   const [applyOpen, setApplyOpen] = useState(false);
+  const bodyRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setApplyOpen(false);
   }, [job?.id]);
+
+  useLayoutEffect(() => {
+    if (scrollResetKey == null) return;
+    const el = bodyRef.current;
+    if (el) {
+      el.scrollTop = 0;
+    }
+  }, [scrollResetKey]);
 
   if (!job) {
     return (
@@ -84,7 +96,10 @@ export function JobDetailPanel({
         jobTitle={jobTitle(job)}
         options={applyOptions}
       />
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4 sm:px-8 sm:py-6">
+      <div
+        ref={bodyRef}
+        className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4 sm:px-8 sm:py-6"
+      >
         {(summariesLoading || job.aiSummary || job.aiSummaryError) && (
           <section
             aria-label="AI-generated summary"

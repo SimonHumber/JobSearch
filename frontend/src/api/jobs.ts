@@ -3,7 +3,10 @@ import type { Job, JobsSearchResponse } from '../types/job';
 
 export interface JobSummaryResult {
   id: string;
-  summary: string;
+  /** LLM summary text (JSON key `description`). */
+  description: string;
+  /** LLM-extracted salary when stated in the posting; null otherwise. */
+  salary: string | null;
   error: string | null;
 }
 

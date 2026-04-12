@@ -19,6 +19,8 @@ interface MobileJobDetailSheetProps {
   open: boolean;
   onClose: () => void;
   summariesLoading?: boolean;
+  /** When this changes, sheet body scrolls to top (same as desktop selected listing key). */
+  scrollResetKey?: string | null;
 }
 
 export function MobileJobDetailSheet({
@@ -26,9 +28,11 @@ export function MobileJobDetailSheet({
   open,
   onClose,
   summariesLoading = false,
+  scrollResetKey = null,
 }: MobileJobDetailSheetProps) {
   const headingId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
+  const bodyScrollRef = useRef<HTMLDivElement>(null);
   const enterInnerRafRef = useRef(0);
   const [present, setPresent] = useState(false);
   /** False until next frame after mount so open animates from translateY(100%). */
@@ -55,6 +59,14 @@ export function MobileJobDetailSheet({
   useEffect(() => {
     setApplyOpen(false);
   }, [job?.id]);
+
+  useLayoutEffect(() => {
+    if (!open || scrollResetKey == null) return;
+    const el = bodyScrollRef.current;
+    if (el) {
+      el.scrollTop = 0;
+    }
+  }, [open, scrollResetKey]);
 
   useEffect(() => {
     if (!present || !open || !job) return;
@@ -136,6 +148,7 @@ export function MobileJobDetailSheet({
         </button>
       </div>
       <div
+        ref={bodyScrollRef}
         className="min-h-0 flex-1 touch-pan-y overscroll-y-contain px-4 py-4"
         style={{
           overflowY: 'auto',

@@ -2,6 +2,7 @@ import {
   FormEvent,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -43,6 +44,14 @@ export default function App() {
   const [mobileSearchExpanded, setMobileSearchExpanded] = useState(true);
   const isDesktop = useMediaQuery('(min-width: 1024px)');
   const summarizeGeneration = useRef(0);
+  const jobListRef = useRef<HTMLUListElement>(null);
+
+  useLayoutEffect(() => {
+    const el = jobListRef.current;
+    if (el) {
+      el.scrollTop = 0;
+    }
+  }, [listPage]);
 
   const totalListPages = Math.max(1, Math.ceil(jobs.length / RESULTS_PER_PAGE));
   const listOffset = (listPage - 1) * RESULTS_PER_PAGE;
@@ -163,10 +172,14 @@ export default function App() {
               aiSummaryError: 'No summary returned for this job.',
             };
           }
+          const hadSearchSalary = Boolean(j.salaryDisplay?.trim());
+          const llmSalary = (s.salary ?? '').trim();
+          const useLlmSalary = llmSalary.length > 0 && !hadSearchSalary;
           return {
             ...j,
-            aiSummary: s.summary || null,
+            aiSummary: s.description?.trim() || null,
             aiSummaryError: s.error,
+            salaryDisplay: useLlmSalary ? llmSalary : j.salaryDisplay,
           };
         })
       );
@@ -307,7 +320,10 @@ export default function App() {
                 role="tablist"
                 aria-label="Job results"
               >
-                <ul className="min-h-0 flex-1 divide-y divide-slate-200 overflow-y-auto dark:divide-slate-700">
+                <ul
+                  ref={jobListRef}
+                  className="min-h-0 flex-1 divide-y divide-slate-200 overflow-y-auto dark:divide-slate-700"
+                >
                   {visibleJobs.map((job, i) => {
                     const index = listOffset + i;
                     const key = jobKey(job, index);
@@ -361,6 +377,7 @@ export default function App() {
                 <JobDetailPanel
                   job={selectedJob}
                   summariesLoading={summariesLoading}
+                  scrollResetKey={selectedKey}
                 />
               </div>
             </div>
@@ -370,6 +387,7 @@ export default function App() {
                 open={mobileDetailOpen}
                 onClose={() => setMobileDetailOpen(false)}
                 summariesLoading={summariesLoading}
+                scrollResetKey={selectedKey}
               />
             )}
           </div>

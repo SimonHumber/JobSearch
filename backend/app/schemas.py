@@ -45,7 +45,8 @@ class SummarizeJobsRequest(BaseModel):
 
 class JobSummaryOut(BaseModel):
     id: str
-    summary: str
+    description: str = ""
+    salary: str | None = None
     error: str | None = None
 
 
