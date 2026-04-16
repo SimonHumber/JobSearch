@@ -201,9 +201,27 @@ export default function App() {
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
       <header className="shrink-0 border-b border-slate-200/80 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80">
         <div className="mx-auto max-w-6xl px-4 pb-4 pt-3 sm:pb-6 sm:pt-6">
-          <h1 className="text-2xl font-bold leading-tight tracking-tight text-slate-900 sm:text-3xl sm:leading-tight lg:leading-normal dark:text-white">
-            Job search
-          </h1>
+          <div className="flex items-center justify-between gap-3">
+            <h1 className="text-2xl font-bold leading-tight tracking-tight text-slate-900 sm:text-3xl sm:leading-tight lg:leading-normal dark:text-white">
+              Job search
+            </h1>
+            <a
+              href="https://github.com/SimonHumber/JobSearch"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="View project on GitHub"
+              className="shrink-0 text-slate-700 transition hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+                className="h-6 w-6 fill-current"
+              >
+                <path d="M12 0.5C5.649 0.5 0.5 5.649 0.5 12c0 5.084 3.292 9.397 7.861 10.919 0.575 0.106 0.785-0.249 0.785-0.553 0-0.273-0.01-0.996-0.015-1.955-3.198 0.695-3.873-1.541-3.873-1.541-0.523-1.328-1.277-1.681-1.277-1.681-1.045-0.714 0.079-0.699 0.079-0.699 1.155 0.081 1.762 1.186 1.762 1.186 1.027 1.76 2.694 1.251 3.351 0.956 0.104-0.744 0.402-1.251 0.731-1.538-2.553-0.29-5.238-1.276-5.238-5.68 0-1.255 0.449-2.281 1.184-3.085-0.119-0.289-0.513-1.455 0.113-3.034 0 0 0.965-0.309 3.162 1.178a10.986 10.986 0 0 1 5.759 0c2.195-1.487 3.158-1.178 3.158-1.178 0.628 1.579 0.234 2.745 0.115 3.034 0.737 0.804 1.183 1.83 1.183 3.085 0 4.414-2.689 5.386-5.251 5.671 0.413 0.355 0.781 1.055 0.781 2.126 0 1.535-0.014 2.772-0.014 3.149 0 0.306 0.207 0.664 0.79 0.551C20.211 21.393 23.5 17.082 23.5 12 23.5 5.649 18.351 0.5 12 0.5z" />
+              </svg>
+              <span className="sr-only">View on GitHub</span>
+            </a>
+          </div>
           {!isDesktop && (
             <button
               type="button"
@@ -211,10 +229,17 @@ export default function App() {
               aria-expanded={mobileSearchExpanded}
               aria-controls="search-settings-form"
               onClick={() => setMobileSearchExpanded((open) => !open)}
-              className="mt-9 flex w-full items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50/90 px-3 py-1.5 text-left text-xs font-medium text-slate-800 shadow-sm transition hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-800/80 dark:text-slate-100 dark:hover:bg-slate-800"
+              className="mt-9 flex w-full items-center justify-between gap-2 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-left text-xs font-medium text-indigo-900 shadow-sm transition hover:bg-indigo-100 dark:border-indigo-500/40 dark:bg-indigo-500/15 dark:text-indigo-100 dark:hover:bg-indigo-500/25"
             >
-              <span>Search settings</span>
-              <span className="text-slate-500 dark:text-slate-400" aria-hidden>
+              <span>
+                {mobileSearchExpanded
+                  ? 'Collapse search settings'
+                  : 'Expand search settings'}
+              </span>
+              <span
+                className="text-base leading-none text-indigo-600 dark:text-indigo-300"
+                aria-hidden
+              >
                 {mobileSearchExpanded ? '\u25B2' : '\u25BC'}
               </span>
             </button>

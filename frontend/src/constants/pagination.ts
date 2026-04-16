@@ -9,7 +9,7 @@ export const JSEARCH_NUM_PAGES_MAX = 50;
  * JSearch `/search`: default number of pages to fetch in one request (often ~10 jobs per page).
  * The provider allows up to 50 pages per query.
  */
-export const JSEARCH_FETCH_NUM_PAGES = 50;
+export const JSEARCH_FETCH_NUM_PAGES = 1;
 
 export function clampJsearchNumPages(n: number): number {
   if (!Number.isFinite(n)) return JSEARCH_FETCH_NUM_PAGES;

@@ -45,7 +45,7 @@ async def search_jobs(
     job_title: str = Query("", alias="jobTitle"),
     location: str = Query(""),
     page: int = Query(1, ge=1),
-    num_pages: int = Query(50, ge=1, le=50, alias="numPages"),
+    num_pages: int = Query(1, ge=1, le=50, alias="numPages"),
 ) -> JobsSearchResponse:
     settings = get_settings()
     if not settings.rapid_api_key.strip():
