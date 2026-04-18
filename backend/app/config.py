@@ -19,8 +19,7 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
 
     groq_api_key: str = ""
-    # Llama 4 Scout: instruct-tuned MoE (~17B active, 16 experts); closest to "Llama 16B instruct" on Groq.
-    groq_model: str = "meta-llama/llama-4-scout-17b-16e-instruct"
+    groq_model: str = "openai/gpt-oss-120b"
 
 
 def get_settings() -> Settings:

@@ -47,6 +47,7 @@ class JobSummaryOut(BaseModel):
     id: str
     description: str = ""
     salary: str | None = None
+    office_location_toronto: str | None = None
     error: str | None = None
 
 

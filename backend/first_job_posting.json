@@ -1,0 +1,38 @@
+{
+  "generatedAt": "2026-04-18T14:11:13.214098+00:00",
+  "query": "software engineer",
+  "location": "Toronto",
+  "page": 1,
+  "numPages": 1,
+  "job": {
+    "id": "ZNtS3hlcrfhFookRAAAAAA==",
+    "title": "Software Engineer 1(JavaScript, TypeScript & NodeJS)",
+    "company": "U.S. Bank National Association",
+    "location": "Toronto, ON, Canada",
+    "postedAt": "2026-04-15T00:00:00.000Z",
+    "postedDisplay": "Apr 15, 2026",
+    "description": "At U.S. Bank, we\u2019re on a journey to do our best. Helping the customers and businesses we serve to make better and smarter financial decisions and enabling the communities we support to grow and succeed. We believe it takes all of us to bring our shared ambition to life, and each person is unique in their potential. A career with U.S. Bank gives you a wide, ever-growing range of opportunities to discover what makes you thrive at every stage of your career. Try new things, learn new skills and discover what you excel at\u2014all from Day One.\n\nJob Description\nThis position will be responsible for the analysis, design, testing, development and maintenance of best in class software experiences. The candidate is a self-motivated individual who can collaborate with a team and across the organization. The candidate takes responsibility of the software artifacts produced adhering to U.S. Bank standards in order to ensure minimal impact to the customer experience. The candidate will be adept with the agile software development lifecycle and DevOps principles.\n\nEssential Responsibilities:\n- Responsible for designing, developing, testing, operating and maintaining products\n- Takes full stack ownership by consistently writing production-ready and testable code\n- Consistently creates optimal design adhering to architectural best practices; considers scalability, reliability and performance of systems/contexts affected when defining technical designs\n- Performs analysis on failures, propose design changes, and encourage operational improvements\n- Makes sound design/coding decisions keeping customer experience in the forefront\n- Takes feedback from code review and apply changes to meet standards\n- Conducts code reviews to provide guidance on engineering best practices and compliance with development procedures\n- Accountable for ensuring all aspects of product development follow compliance and security best practices\n- Exhibits relentless focus in software reliability engineering standards embedded into development standards\n- Embraces emerging technology opportunities and contributes to the best practices in support of the bank\u2019s technology transformation\n\nBasic Qualifications\n- Bachelor\u2019s degree, or equivalent work experience\n- Two to three years of relevant experience\n\nPreferred Skills/Experience\n\u2022 Experience developing in JavaScript, TypeScript & NodeJS\n\u2022 Experience with a modern front-end framework such Ember or React\n\u2022 Understanding with MongoDB and Non-Relational Database modeling\n\u2022 Understanding of agile software development lifecycle\n\u2022 Ability to create and maintain technical documentation for APIs ( e.g. Swagger) and components\n\u2022 Effective problem-solving and analytical skills\n\nLocation expectations\nThis role requires working from a U.S. Bank location three (3) or more days per week.\n\nIf there\u2019s anything we can do to accommodate a disability during any portion of the application or hiring process, please refer to our disability accommodations for applicants.\n\nBenefits:\n\nOur approach to benefits and total rewards considers our team members\u2019 whole selves and what may be needed to thrive in and outside work. That's why our benefits are designed to help you and your family boost your health, protect your financial security and give you peace of mind.\n\nPosting may be closed earlier due to high volume of applicants.",
+    "salaryDisplay": null,
+    "listingSource": null,
+    "jobPublisher": "Careers At U.S. Bank",
+    "jobMinSalary": null,
+    "jobMaxSalary": null,
+    "jobMedianSalary": null,
+    "jobSalaryCurrency": null,
+    "jobSalaryPeriod": null,
+    "jobCity": "Toronto",
+    "jobState": "Ontario",
+    "jobCountry": "CA",
+    "jobLocation": "Toronto, ON, Canada",
+    "employerName": "U.S. Bank National Association",
+    "applyOptions": [
+      {
+        "publisher": "Careers At U.S. Bank",
+        "applyLink": "https://careers.usbank.com/global/en/job/UBNAGLOBAL20260009081EXTERNALENGLOBAL/Software-Engineer-1-JavaScript-TypeScript-NodeJS"
+      }
+    ],
+    "aiSummary": "The role involves analysis, design, testing, development, and maintenance of software experiences, with full\u2011stack ownership and adherence to U.S. Bank standards and DevOps practices.\nQualifications:\n- Bachelor\u2019s degree or equivalent work experience\n- 2\u20113 years of relevant software development experience\n- Experience with JavaScript, TypeScript, and NodeJS\n- Experience using a modern front\u2011end framework such as Ember or React\n- Understanding of MongoDB and non\u2011relational database modeling\n- Familiarity with agile software development lifecycle\n- Ability to create and maintain technical API documentation (e.g., Swagger)\n- Strong problem\u2011solving and analytical skills\n- Ability to conduct code reviews and follow compliance and security best practices",
+    "aiOfficeLocationToronto": null,
+    "aiSummaryError": null
+  }
+}
