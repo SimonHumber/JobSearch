@@ -123,9 +123,20 @@ def _parse_office_only_json(content: str) -> str | None:
     return office_text
 
 
+def _extract_usage_counts(completion: object) -> tuple[int | None, int | None, int | None]:
+    usage = getattr(completion, "usage", None)
+    if usage is None:
+        return None, None, None
+    prompt_tokens = getattr(usage, "prompt_tokens", None)
+    completion_tokens = getattr(usage, "completion_tokens", None)
+    total_tokens = getattr(usage, "total_tokens", None)
+    return prompt_tokens, completion_tokens, total_tokens
+
+
 def _summarize_one(
     job_id: str,
     description_text: str,
+    company: str | None,
     *,
     client: Groq,
     model: str,
@@ -135,8 +146,13 @@ def _summarize_one(
         return JobSummaryOut(id=job_id, description="", salary=None, error=None)
 
     truncated = text[:_MAX_DESC_CHARS]
-    # User message is only the posting text; instructions live in the system prompt.
-    user_msg = truncated
+    company_text = (company or "").strip()
+    # Pass company + description as structured plain text context.
+    user_msg = (
+        f"Company: {company_text}\n\nJob description:\n{truncated}"
+        if company_text
+        else truncated
+    )
     model_name = (model or "").strip().lower()
     is_gpt_oss = "gpt-oss" in model_name
     try:
@@ -153,6 +169,11 @@ def _summarize_one(
             temperature=0.2,
             max_tokens=900,
             **summary_kwargs,
+        )
+        p1_prompt, p1_completion, p1_total = _extract_usage_counts(summary_completion)
+        print(
+            f"[llm][{job_id}] prompt1 tokens "
+            f"prompt={p1_prompt} completion={p1_completion} total={p1_total}"
         )
         choice = summary_completion.choices[0].message
         content = _extract_message_content(choice)
@@ -175,9 +196,10 @@ def _summarize_one(
 
         # Pass 2: run focused browser-search lookup only when office is null.
         if office_location_toronto is None:
+            company_text = (company or "").strip() or "Unknown"
             office_prompt = (
-                "Company and job posting context:\n"
-                f"{truncated[:8000]}\n\n"
+                "Company context:\n"
+                f"{company_text}\n\n"
                 "Find a Toronto office street address for this employer."
             )
             try:
@@ -190,6 +212,13 @@ def _summarize_one(
                     tools=[{"type": "browser_search"}],
                     temperature=0.0,
                     max_tokens=220,
+                )
+                p2_prompt, p2_completion, p2_total = _extract_usage_counts(
+                    office_completion
+                )
+                print(
+                    f"[llm][{job_id}] prompt2 tokens "
+                    f"prompt={p2_prompt} completion={p2_completion} total={p2_total}"
                 )
                 office_choice = office_completion.choices[0].message
                 office_content = _extract_message_content(office_choice)
@@ -244,6 +273,7 @@ async def summarize_job_descriptions(
                 _summarize_one,
                 job.id,
                 job.description,
+                job.company,
                 client=client,
                 model=model,
             )

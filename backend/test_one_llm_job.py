@@ -58,15 +58,14 @@ async def _run(description: str, company: str | None = None) -> None:
     if not key:
         raise RuntimeError("GROQ_API_KEY is not configured.")
 
-    company_text = (company or "").strip()
-    user_description = (
-        f"Company: {company_text}\n\nJob description:\n{description}"
-        if company_text
-        else description
-    )
-
     summaries = await summarize_job_descriptions(
-        [JobDescriptionIn(id=DEFAULT_ID, description=user_description)],
+        [
+            JobDescriptionIn(
+                id=DEFAULT_ID,
+                description=description,
+                company=(company or "").strip() or None,
+            )
+        ],
         api_key=key,
         model=settings.groq_model.strip(),
     )

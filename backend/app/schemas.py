@@ -37,6 +37,7 @@ class JobsSearchResponse(BaseModel):
 class JobDescriptionIn(BaseModel):
     id: str
     description: str
+    company: str | None = None
 
 
 class SummarizeJobsRequest(BaseModel):

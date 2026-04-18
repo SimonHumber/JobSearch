@@ -123,12 +123,8 @@ async def generate_jobs_json(
             [
                 JobDescriptionIn(
                     id=str(j["id"]),
-                    description=(
-                        f"Company: {str(j.get('company') or '').strip()}\n\n"
-                        f"Job description:\n{str(j['description'])}"
-                        if str(j.get("company") or "").strip()
-                        else str(j["description"])
-                    ),
+                    description=str(j["description"]),
+                    company=str(j.get("company") or "").strip() or None,
                 )
                 for j in jobs
             ],
