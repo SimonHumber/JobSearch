@@ -23,6 +23,8 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
   const [generatedAt, setGeneratedAt] = useState<string | null>(null);
+  const [queryLabel, setQueryLabel] = useState('software engineer');
+  const [locationLabel, setLocationLabel] = useState('Toronto');
   const isDesktop = useMediaQuery('(min-width: 1024px)');
   const jobListRef = useRef<HTMLUListElement>(null);
 
@@ -95,6 +97,8 @@ export default function App() {
       const payload = await loadCuratedJobs();
       setJobs(payload.jobs ?? []);
       setGeneratedAt(payload.generatedAt ?? null);
+      setQueryLabel(payload.query?.trim() || 'software engineer');
+      setLocationLabel(payload.location?.trim() || 'Toronto');
       setListPage(1);
     } catch (err) {
       setJobs([]);
@@ -137,7 +141,7 @@ export default function App() {
             </a>
           </div>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-            Showing backend-curated results for software engineer roles in Toronto.
+            {queryLabel} roles in {locationLabel}.
           </p>
           {generatedAt ? (
             <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
