@@ -2,7 +2,7 @@ name: Backend Scheduled Ingest
 
 on:
   schedule:
-    - cron: "0 8.56 * * 0" # Monday and Wednesday at 03:00 UTC
+    - cron: "36 8 * * 0"
   workflow_dispatch:
 
 jobs:
