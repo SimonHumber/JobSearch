@@ -102,6 +102,7 @@ export function MobileJobDetailSheet({
   const posted = formatPostedAt(job);
   const salary = formatJobSalary(job);
   const source = jobSourceLabel(job);
+  const officeLocationToronto = job.aiOfficeLocationToronto ?? job.office_location_toronto;
   const applyOptions = job.applyOptions ?? [];
   const hasApplyUrls = applyOptions.length > 0;
 
@@ -176,6 +177,11 @@ export function MobileJobDetailSheet({
             {formatJobLocation(job)}
             {posted ? ` · Posted ${posted}` : ''}
           </p>
+          {officeLocationToronto ? (
+            <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+              Toronto office location: {officeLocationToronto}
+            </p>
+          ) : null}
           {salary && (
             <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
               Salary: {salary}
@@ -185,7 +191,7 @@ export function MobileJobDetailSheet({
             <p className="text-xs text-slate-500 dark:text-slate-400">Listing source: {source}</p>
           )}
         </div>
-        {(summariesLoading || job.aiSummary || job.aiSummaryError) && (
+        {(summariesLoading || job.aiSummary || job.aiOfficeLocationToronto || job.aiSummaryError) && (
           <section
             aria-label="AI-generated summary"
             className="mt-4 rounded-lg border border-indigo-200/80 bg-indigo-50/90 px-3 py-3 dark:border-indigo-500/30 dark:bg-indigo-950/40"
