@@ -2,20 +2,21 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import hashlib
 from typing import Any
 
 import httpx
 
 from app.config import get_settings
-from app.db import init_db, replace_job_postings
+from app.db import geocode_companies_missing_coords, init_db, replace_job_postings
 from app.groq_summarize import summarize_job_descriptions
-from app.normalize import normalize_job
 from app.schemas import JobDescriptionIn, JobOut
 
 DEFAULT_QUERY_JOB_TITLE = "software engineer"
 DEFAULT_QUERY_LOCATION = "Toronto"
 DEFAULT_QUERY_PAGE = 1
 DEFAULT_QUERY_NUM_PAGES = 15
+DEFAULT_SEARCH_RADIUS_KM = 25
 
 
 def _build_query(job_title: str, location: str) -> str:
@@ -26,6 +27,140 @@ def _build_query(job_title: str, location: str) -> str:
     return title or loc
 
 
+def _split_location(location: str) -> tuple[str | None, str | None, str | None]:
+    parts = [p.strip() for p in location.split(",") if p and p.strip()]
+    city = parts[0] if len(parts) >= 1 else None
+    state = parts[1] if len(parts) >= 2 else None
+    country = parts[2] if len(parts) >= 3 else None
+    return city, state, country
+
+
+def _extract_serp_description(item: dict[str, Any]) -> str:
+    desc = str(item.get("description") or "").strip()
+    if desc:
+        return desc
+
+    highlights = item.get("job_highlights")
+    if not isinstance(highlights, list):
+        return "No description provided."
+
+    lines: list[str] = []
+    for section in highlights:
+        if not isinstance(section, dict):
+            continue
+        title = str(section.get("title") or "").strip()
+        items = section.get("items")
+        if title:
+            lines.append(f"{title}:")
+        if isinstance(items, list):
+            for bullet in items:
+                b = str(bullet or "").strip()
+                if b:
+                    lines.append(f"- {b}")
+    return "\n".join(lines).strip() or "No description provided."
+
+
+def _extract_serp_salary_display(item: dict[str, Any]) -> str | None:
+    detected = item.get("detected_extensions")
+    if isinstance(detected, dict):
+        salary = str(detected.get("salary") or "").strip()
+        if salary:
+            return salary
+    extensions = item.get("extensions")
+    if isinstance(extensions, list):
+        for ext in extensions:
+            text = str(ext or "").strip()
+            if "$" in text:
+                return text
+    return None
+
+
+def _extract_serp_posted_display(item: dict[str, Any]) -> str | None:
+    detected = item.get("detected_extensions")
+    if isinstance(detected, dict):
+        posted = str(detected.get("posted_at") or "").strip()
+        if posted:
+            return posted
+    return None
+
+
+def _extract_serp_apply_options(item: dict[str, Any]) -> list[dict[str, str]]:
+    out: list[dict[str, str]] = []
+    seen: set[str] = set()
+
+    def add(publisher: str, link: str) -> None:
+        href = str(link or "").strip()
+        if not href or href in seen:
+            return
+        seen.add(href)
+        pub = str(publisher or "").strip() or "Apply"
+        out.append({"publisher": pub, "applyLink": href})
+
+    raw_apply = item.get("apply_options")
+    if isinstance(raw_apply, list):
+        for option in raw_apply:
+            if not isinstance(option, dict):
+                continue
+            add(
+                str(option.get("title") or option.get("publisher") or "Apply"),
+                str(option.get("link") or option.get("apply_link") or ""),
+            )
+
+    raw_related = item.get("related_links")
+    if isinstance(raw_related, list):
+        for option in raw_related:
+            if not isinstance(option, dict):
+                continue
+            add(
+                str(option.get("text") or option.get("title") or "Apply"),
+                str(option.get("link") or ""),
+            )
+
+    return out
+
+
+def _serp_item_to_job_dict(item: dict[str, Any], query: str, index: int) -> dict[str, Any]:
+    title = str(item.get("title") or "").strip() or "Untitled role"
+    company = str(item.get("company_name") or item.get("company") or "").strip()
+    location = str(item.get("location") or "").strip() or "Location not listed"
+    city, state, country = _split_location(location)
+    description = _extract_serp_description(item)
+    salary_display = _extract_serp_salary_display(item)
+    posted_display = _extract_serp_posted_display(item)
+    publisher = str(item.get("via") or "").strip() or None
+
+    raw_id = str(item.get("job_id") or "").strip()
+    if raw_id:
+        job_id = raw_id
+    else:
+        stable = f"{title}|{company}|{location}|{query}|{index}"
+        job_id = "serp-" + hashlib.sha1(stable.encode("utf-8")).hexdigest()[:16]
+
+    return {
+        "id": job_id,
+        "title": title,
+        "company": company or "Company not listed",
+        "location": location,
+        "postedAt": None,
+        "postedDisplay": posted_display,
+        "description": description,
+        "salaryDisplay": salary_display,
+        "listingSource": publisher,
+        "jobPublisher": publisher,
+        "jobMinSalary": None,
+        "jobMaxSalary": None,
+        "jobMedianSalary": None,
+        "jobSalaryCurrency": None,
+        "jobSalaryPeriod": None,
+        "jobCity": city,
+        "jobState": state,
+        "jobCountry": country,
+        "jobLocation": location,
+        "employerName": company or None,
+        "applyOptions": _extract_serp_apply_options(item),
+    }
+
+
 async def _fetch_jobs(
     *,
     job_title: str,
@@ -34,37 +169,78 @@ async def _fetch_jobs(
     num_pages: int,
 ) -> list[dict[str, Any]]:
     print(
-        f"[fetch] Querying JSearch for '{job_title}' in '{location}' "
+        f"[fetch] Querying SerpApi Google Jobs for '{job_title}' in '{location}' "
         f"(page={page}, num_pages={num_pages})"
     )
     settings = get_settings()
-    key = settings.rapid_api_key.strip()
+    key = settings.serpapi_key.strip()
     if not key:
-        raise RuntimeError("RAPID_API_KEY is required.")
+        raise RuntimeError("SERPAPI_KEY is required.")
 
     query = _build_query(job_title, location)
-    params = {"query": query, "page": page, "num_pages": num_pages}
-    headers = {"X-RapidAPI-Key": key, "X-RapidAPI-Host": settings.jsearch_host}
-    url = f"{settings.jsearch_base.rstrip('/')}/search"
+    if not query:
+        return []
+
+    url = settings.serpapi_base.rstrip("/")
+    jobs: list[dict[str, Any]] = []
+    seen_ids: set[str] = set()
+    normalized_index = 0
+    next_page_token: str | None = None
 
     async with httpx.AsyncClient(timeout=120.0) as client:
-        response = await client.get(url, params=params, headers=headers)
-    if response.status_code != 200:
-        raise RuntimeError(
-            f"JSearch error ({response.status_code}): {response.text[:500]}"
-        )
+        for offset in range(num_pages):
+            request_label = f"page={page + offset}"
+            params = {
+                "engine": "google_jobs",
+                "q": query,
+                "api_key": key,
+                "hl": "en",
+                "location": location,
+                "lrad": DEFAULT_SEARCH_RADIUS_KM,
+            }
+            if next_page_token:
+                params["next_page_token"] = next_page_token
+            response = await client.get(url, params=params)
+            if response.status_code != 200:
+                raise RuntimeError(
+                    f"SerpApi error ({response.status_code}) at {request_label}: "
+                    f"{response.text[:500]}"
+                )
 
-    payload = response.json()
-    raw_jobs = payload.get("data") if isinstance(payload, dict) else None
-    if not isinstance(raw_jobs, list):
-        raw_jobs = []
+            payload = response.json()
+            page_jobs = payload.get("jobs_results") if isinstance(payload, dict) else None
+            if not isinstance(page_jobs, list):
+                page_jobs = []
 
-    jobs: list[dict[str, Any]] = []
-    for i, item in enumerate(raw_jobs):
-        if not isinstance(item, dict):
-            continue
-        normalized = normalize_job(item, i)
-        jobs.append(JobOut.model_validate(normalized).model_dump())
+            print(f"[fetch] {request_label} returned {len(page_jobs)} jobs")
+            if not page_jobs:
+                break
+
+            for item in page_jobs:
+                if not isinstance(item, dict):
+                    continue
+                job = _serp_item_to_job_dict(item, query, normalized_index)
+                job_id = str(job.get("id") or "").strip()
+                if job_id and job_id in seen_ids:
+                    continue
+                if job_id:
+                    seen_ids.add(job_id)
+                jobs.append(JobOut.model_validate(job).model_dump())
+                normalized_index += 1
+
+            pagination = (
+                payload.get("serpapi_pagination") if isinstance(payload, dict) else None
+            )
+            token_value = (
+                pagination.get("next_page_token")
+                if isinstance(pagination, dict)
+                else None
+            )
+            next_page_token = str(token_value).strip() if token_value else None
+            if not next_page_token:
+                print("[fetch] No next_page_token; stopping pagination")
+                break
+
     print(f"[fetch] Retrieved {len(jobs)} jobs")
     return jobs
 
@@ -141,6 +317,11 @@ async def generate_jobs_json(
     init_db(db_url)
     print("[db] Replacing job_postings contents")
     replace_job_postings(db_url, jobs)
+    print("[geo] Geocoding companies with known address but missing coordinates")
+    geocode_companies_missing_coords(
+        db_url,
+        map_api_key=settings.map_api_key,
+    )
     print(f"[done] Ingested {len(jobs)} jobs to database")
 
 

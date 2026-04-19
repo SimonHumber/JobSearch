@@ -18,9 +18,9 @@ class Settings(BaseSettings):
     database_url: str = "postgresql://postgres:postgres@localhost:5432/jobsearch"
     supabase_url: str = ""
     supabase_secret: str = ""
-    rapid_api_key: str = ""
-    jsearch_host: str = "jsearch.p.rapidapi.com"
-    jsearch_base: str = "https://jsearch.p.rapidapi.com"
+    serpapi_key: str = ""
+    map_api_key: str = ""
+    serpapi_base: str = "https://serpapi.com/search.json"
     cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
 
     @property

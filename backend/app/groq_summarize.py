@@ -30,8 +30,8 @@ _SYSTEM_SUMMARY_WITH_SEARCH = (
     "newline characters (\\n) for spacing. Avoid all Markdown formatting like bolding (**) or headers (#)."
     "\n\n"
     "3. For 'office_location_toronto': use provided context and web search. "
-    "You may use search tools. Return only a Toronto office STREET ADDRESS "
-    "(street number + street name + Toronto) when explicit. If not found, return null."
+    "You may use search tools. Return only a STREET ADDRESS "
+    "(street number + street name + city) when explicit. If not found, return null."
 )
 
 

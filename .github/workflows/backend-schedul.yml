@@ -2,7 +2,7 @@ name: Backend Scheduled Ingest
 
 on:
   schedule:
-    - cron: "0 8 * * 1"
+    - cron: "0 8 * * 0,3"
   workflow_dispatch:
 
 jobs:
@@ -28,8 +28,9 @@ jobs:
 
       - name: Run backend ingest
         env:
-          RAPID_API_KEY: ${{ secrets.RAPID_API_KEY }}
+          SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          MAP_API_KEY: ${{ secrets.MAP_API_KEY }}
           GEMINI_MODEL: gemma-4-31b-it
         run: python dev.py
