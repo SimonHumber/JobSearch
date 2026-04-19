@@ -7,9 +7,25 @@ export interface CuratedJobsPayload extends JobsSearchResponse {
   numPages?: number;
 }
 
+interface SupabaseJobRow {
+  payload?: unknown;
+  created_at?: unknown;
+}
+
 export async function loadCuratedJobs(): Promise<CuratedJobsPayload> {
-  const url = '/jobs.json';
-  const res = await fetch(url);
+  const baseUrl = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim();
+  const apiKey = (import.meta.env.VITE_SUPABASE_API_KEY as string | undefined)?.trim();
+  if (!baseUrl || !apiKey) {
+    throw new Error('Missing VITE_SUPABASE_URL or VITE_SUPABASE_API_KEY in frontend/.env');
+  }
+
+  const url = `${baseUrl.replace(/\/+$/, '')}/rest/v1/job_postings?select=payload,created_at&order=created_at.desc,id.asc`;
+  const res = await fetch(url, {
+    headers: {
+      apikey: apiKey,
+      Authorization: `Bearer ${apiKey}`,
+    },
+  });
 
   if (!res.ok) {
     const text = await res.text();
@@ -27,13 +43,18 @@ export async function loadCuratedJobs(): Promise<CuratedJobsPayload> {
     throw new Error(detail);
   }
 
-  const data = (await res.json()) as Partial<CuratedJobsPayload>;
-  const jobs = Array.isArray(data.jobs) ? (data.jobs as Job[]) : [];
+  const rows = (await res.json()) as SupabaseJobRow[];
+  const safeRows = Array.isArray(rows) ? rows : [];
+  const jobs: Job[] = safeRows
+    .map((row) => row.payload)
+    .filter((payload): payload is Job => typeof payload === 'object' && payload !== null);
+
+  const generatedAtRaw = safeRows[0]?.created_at;
   return {
-    generatedAt: typeof data.generatedAt === 'string' ? data.generatedAt : undefined,
-    query: typeof data.query === 'string' ? data.query : undefined,
-    location: typeof data.location === 'string' ? data.location : undefined,
-    numPages: typeof data.numPages === 'number' ? data.numPages : undefined,
+    generatedAt: typeof generatedAtRaw === 'string' ? generatedAtRaw : undefined,
+    query: 'software engineer',
+    location: 'Toronto',
+    numPages: undefined,
     jobs,
   };
 }
