@@ -85,21 +85,27 @@ export function CompaniesMapPage() {
         grouped.forEach((groupCompanies) => {
           const first = groupCompanies[0];
           const position = { lat: first.lat, lng: first.long };
+          const isStacked = groupCompanies.length > 1;
           const marker = new googleMaps.Marker({
             position,
             map,
-            title:
-              groupCompanies.length === 1
-                ? groupCompanies[0].name
-                : `${groupCompanies.length} companies`,
+            title: isStacked ? `${groupCompanies.length} companies` : groupCompanies[0].name,
             icon: {
               path: googleMaps.SymbolPath.CIRCLE,
-              scale: 5,
+              scale: isStacked ? 10 : 7,
               fillColor: '#4f46e5',
               fillOpacity: 1,
               strokeColor: '#ffffff',
               strokeWeight: 1.5,
             },
+            label: isStacked
+              ? {
+                  text: String(groupCompanies.length),
+                  color: '#ffffff',
+                  fontSize: '11px',
+                  fontWeight: '700',
+                }
+              : undefined,
           });
           const popupItems = groupCompanies
             .map(
