@@ -100,11 +100,11 @@ export function CompaniesMapPage() {
             },
             label: isStacked
               ? {
-                  text: String(groupCompanies.length),
-                  color: '#ffffff',
-                  fontSize: '11px',
-                  fontWeight: '700',
-                }
+                text: String(groupCompanies.length),
+                color: '#ffffff',
+                fontSize: '11px',
+                fontWeight: '700',
+              }
               : undefined,
           });
           const popupItems = groupCompanies
@@ -162,9 +162,6 @@ export function CompaniesMapPage() {
             <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
               Companies map
             </h1>
-            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-              Showing companies with saved address and coordinates.
-            </p>
           </div>
           <Link
             to="/"
