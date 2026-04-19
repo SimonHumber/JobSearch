@@ -32,4 +32,4 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
           GEMINI_MODEL: gemma-4-31b-it
-        run: python dev.py --job-title "software engineer" --location "Toronto" --page 1 --num-pages 1
+        run: python dev.py
