@@ -15,7 +15,7 @@ from app.schemas import JobDescriptionIn, JobOut
 DEFAULT_QUERY_JOB_TITLE = "software engineer"
 DEFAULT_QUERY_LOCATION = "Toronto"
 DEFAULT_QUERY_PAGE = 1
-DEFAULT_QUERY_NUM_PAGES = 1
+DEFAULT_QUERY_NUM_PAGES = 15
 
 
 def _build_query(job_title: str, location: str) -> str:
@@ -136,9 +136,7 @@ async def generate_jobs_json(
 
     db_url = settings.postgres_url
     if not db_url:
-        raise RuntimeError(
-            "Set SUPABASE_URL (or DATABASE_URL) in backend/.env."
-        )
+        raise RuntimeError("Set SUPABASE_URL (or DATABASE_URL) in backend/.env.")
     print("[db] Initializing database schema")
     init_db(db_url)
     print("[db] Replacing job_postings contents")

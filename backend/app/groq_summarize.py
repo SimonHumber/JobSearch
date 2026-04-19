@@ -12,7 +12,7 @@ import httpx
 from app.schemas import JobDescriptionIn, JobSummaryOut
 
 _MAX_DESC_CHARS = 24_000
-_LLM_CALL_INTERVAL_SECONDS = 2
+_LLM_CALL_INTERVAL_SECONDS = 20
 _GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta"
 
 _SYSTEM_SUMMARY_WITH_SEARCH = (
