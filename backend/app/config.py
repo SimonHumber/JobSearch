@@ -13,13 +13,23 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
+    google_api_key: str = ""
+    gemini_model: str = "gemma-4-31b-it"
+    database_url: str = "postgresql://postgres:postgres@localhost:5432/jobsearch"
+    supabase_url: str = ""
+    supabase_secret: str = ""
     rapid_api_key: str = ""
     jsearch_host: str = "jsearch.p.rapidapi.com"
     jsearch_base: str = "https://jsearch.p.rapidapi.com"
     cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
 
-    google_api_key: str = ""
-    gemini_model: str = "gemma-4-31b-it"
+    @property
+    def postgres_url(self) -> str:
+        for candidate in (self.supabase_url, self.database_url):
+            value = (candidate or "").strip()
+            if value:
+                return value
+        return ""
 
 
 def get_settings() -> Settings:

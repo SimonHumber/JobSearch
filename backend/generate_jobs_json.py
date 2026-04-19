@@ -2,19 +2,16 @@ from __future__ import annotations
 
 import argparse
 import asyncio
-import json
-from datetime import datetime, timezone
-from pathlib import Path
 from typing import Any
 
 import httpx
 
 from app.config import get_settings
+from app.db import init_db, replace_job_postings
 from app.groq_summarize import summarize_job_descriptions
 from app.normalize import normalize_job
 from app.schemas import JobDescriptionIn, JobOut
 
-DEFAULT_OUTPUT_PATH = "../frontend/public/jobs.json"
 DEFAULT_QUERY_JOB_TITLE = "software engineer"
 DEFAULT_QUERY_LOCATION = "Toronto"
 DEFAULT_QUERY_PAGE = 1
@@ -99,7 +96,6 @@ def _merge_summaries(
 
 async def generate_jobs_json(
     *,
-    output: Path,
     job_title: str,
     location: str,
     page: int,
@@ -138,48 +134,35 @@ async def generate_jobs_json(
     else:
         print("[llm] No jobs returned; skipping summaries")
 
-    payload = {
-        "generatedAt": datetime.now(timezone.utc).isoformat(),
-        "query": job_title,
-        "location": location,
-        "numPages": num_pages,
-        "jobs": jobs,
-    }
-    output.parent.mkdir(parents=True, exist_ok=True)
-    print(f"[write] Writing output to {output}")
-    output.write_text(
-        json.dumps(payload, ensure_ascii=True, indent=2), encoding="utf-8"
-    )
-    print(f"[done] Wrote {len(jobs)} jobs to {output}")
+    db_url = settings.postgres_url
+    if not db_url:
+        raise RuntimeError(
+            "Set SUPABASE_URL (or DATABASE_URL) in backend/.env."
+        )
+    print("[db] Initializing database schema")
+    init_db(db_url)
+    print("[db] Replacing job_postings contents")
+    replace_job_postings(db_url, jobs)
+    print(f"[done] Ingested {len(jobs)} jobs to database")
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Generate frontend jobs.json feed.")
-    parser.add_argument(
-        "--output",
-        default=DEFAULT_OUTPUT_PATH,
-        help=f"Output JSON path (default: {DEFAULT_OUTPUT_PATH})",
-    )
+    parser = argparse.ArgumentParser(description="Fetch jobs and ingest into database.")
     parser.add_argument("--job-title", default=DEFAULT_QUERY_JOB_TITLE)
     parser.add_argument("--location", default=DEFAULT_QUERY_LOCATION)
     parser.add_argument("--page", type=int, default=DEFAULT_QUERY_PAGE)
     parser.add_argument("--num-pages", type=int, default=DEFAULT_QUERY_NUM_PAGES)
     args = parser.parse_args()
 
-    out = Path(args.output)
-    if not out.is_absolute():
-        out = (Path(__file__).resolve().parent / out).resolve()
-
     asyncio.run(
         generate_jobs_json(
-            output=out,
             job_title=args.job_title,
             location=args.location,
             page=max(1, args.page),
             num_pages=max(1, min(50, args.num_pages)),
         )
     )
-    print(f"Wrote curated jobs feed to {out}")
+    print("Database ingest complete.")
 
 
 if __name__ == "__main__":
