@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-18T15:47:51.698269+00:00",
+  "generatedAt": "2026-04-18T17:50:13.888098+00:00",
   "query": "software engineer",
   "location": "Toronto",
   "numPages": 1,
@@ -33,7 +33,7 @@
       ],
       "aiSummary": null,
       "aiOfficeLocationToronto": null,
-      "aiSummaryError": "Error code: 429 - {'error': {'message': 'Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01knwxfj6pegdbehamn1tppdr7` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 198382, Requested 2380. Please try again in 5m29.184s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}"
+      "aiSummaryError": "HTTP 429: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \",\n    \"status\": \"RESOURCE_EXHAUSTED\",\n    \"details\": ["
     },
     {
       "id": "ZNtS3hlcrfhFookRAAAAAA==",
@@ -64,7 +64,7 @@
       ],
       "aiSummary": null,
       "aiOfficeLocationToronto": null,
-      "aiSummaryError": "Error code: 429 - {'error': {'message': 'Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01knwxfj6pegdbehamn1tppdr7` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 198380, Requested 1792. Please try again in 1m14.304s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}"
+      "aiSummaryError": "HTTP 429: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \",\n    \"status\": \"RESOURCE_EXHAUSTED\",\n    \"details\": ["
     },
     {
       "id": "kr6twqA5sTb60dGHAAAAAA==",
@@ -95,38 +95,38 @@
       ],
       "aiSummary": null,
       "aiOfficeLocationToronto": null,
-      "aiSummaryError": "Error code: 429 - {'error': {'message': 'Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01knwxfj6pegdbehamn1tppdr7` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 198378, Requested 1937. Please try again in 2m16.08s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}"
+      "aiSummaryError": "HTTP 429: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \",\n    \"status\": \"RESOURCE_EXHAUSTED\",\n    \"details\": ["
     },
     {
-      "id": "xIfUw2Hgl7siQ6I9AAAAAA==",
-      "title": "Software Engineer (Entry Level) | Remote (Toronto, ON) | $70,000\u2013$110,000 + Equity",
-      "company": "School Result",
+      "id": "7hnxxQMiGjrX5P6RAAAAAA==",
+      "title": "Senior Software Engineer (Python + Web API)",
+      "company": "Inficare Technologies",
       "location": "Toronto, ON, Canada",
-      "postedAt": "2026-04-16T00:00:00.000Z",
-      "postedDisplay": "Apr 16, 2026",
-      "description": "Software Engineer (Entry Level) | Remote (Toronto, ON) | $70,000\u2013$110,000 + Equity\n\nJerry is hiring an entry-level Software Engineer to join its fast-growing engineering team. This full-time remote role is based in the Greater Toronto Area and offers a competitive salary, equity, and a chance to make real-world impact from day one. If you\u2019re curious, driven, and excited to build user-first software in a high-growth startup, this is your opportunity to grow fast and ship meaningful code.\n\n\u2022 Job Title: Software Engineer I (Entry Level)\n\n\u2022 Company: Jerry\n\n\u2022 Salary: $70,000\u2013$110,000 CAD per year + stock options\n\n\u2022 Contract Type: Full-Time\n\n\u2022 Benefits: Health, dental, vision, paid time off, paid parental leave, RRSP with employer matching, wellness benefits, and equity opportunities\n\nAbout Jerry\n\nJerry is building the first AI-powered AllCar\u2122 app to simplify car ownership\u2014from insurance and maintenance to repairs and financing. With over $240M raised and cash-flow positive operations, Jerry has grown revenue 60x in five years and helped users save over $1,000 annually. Now scaling from 5M to 50M users, Jerry is expanding its engineering team in Toronto to fuel the next phase of growth.\nRole Overview\n\nAs a Software Engineer I, you\u2019ll join one of Jerry\u2019s engineering pods\u2014core app, retention, or automation\u2014based on your interests and strengths. You\u2019ll write production code within your first few weeks, collaborate closely with product teams, and contribute to projects that directly impact millions of users.\nKey Responsibilities\n\n\u2022 Write and ship production code early and often\n\n\u2022 Collaborate with product and engineering teams to deliver user-first features\n\n\u2022 Contribute to scalable, high-quality software across the stack\n\n\u2022 Participate in code reviews, standups, and agile development cycles\n\n\u2022 Learn from experienced engineers and grow your technical skillset\n\n\u2022 Explore areas like automation, retention, and AI-powered features\n\n\u2022 Frontend: React, React Native\n\n\u2022 Infrastructure: AWS, Go, Python, Docker, CI/CD\n\n\u2022 AI/ML: Python pipelines, LLM integrations, internal models\n\nRequired Skills and Experience\n\n\u2022 Bachelor\u2019s degree in Computer or Software Engineering, or a related field\n\n\u2022 Passion for learning and building high-quality softwareComfort with ambiguity and fast-paced environments\n\n\u2022 Curiosity, hustle, and a user-first mindset\n\n\u2022 Internship, co-op, or side project experience\n\n\u2022 Familiarity with any part of Jerry\u2019s tech stack\n\nWhat We Offer\n\n\u2022 $70,000\u2013$110,000 base salary (based on experience and market conditions)\n\n\u2022 Stock options and equity opportunities\n\n\u2022 Comprehensive benefits package for full-time employees\n\n\u2022 Mentorship from engineers with backgrounds at Nvidia, TikTok, Cepton\n\n\u2022 Merit-based growth and career development\n\n\u2022 Remote-first culture with a Toronto-based team\n\nHow to Apply\n\nIf you\u2019re ready to build impactful software and grow your career in a high-growth startup, click here to apply directly via Jerry\u2019s careers portal.",
-      "salaryDisplay": null,
+      "postedAt": "2026-04-18T03:00:00.000Z",
+      "postedDisplay": "Apr 18, 2026",
+      "description": "Title: Senior Software Engineer (Python, Web API)\n\nLocation: Toronto, Canada (All 5 Days Onsite)\n\nDuration: Long Term\n\nJob Description:\n\nMandatory Keep Points:\n\u2022 Candidate should have python coding and feature development experience.\n\u2022 Candidates must have mentioned functional details around the Features that they have built - User Experience, Payment Gateways, Customer Management, Scalability and\u00a0Mobile Accessibility\n\u2022 Technical skills: Flask, Fast API, Django\n\u2022 Must have Canadian University Graduates/Masters\n\u2022 Profiles should have more presence/details around the Features built and to develop a successful B2C platform, consider the following key features:\n\u2022 User Experience: Implement advanced search capabilities, product catalogs, and a streamlined checkout process to enhance user engagement\n\u2022 and conversion rates\n\u2022 Payment Gateways: Integrate secure payment processing methods to facilitate secure transactions\n\u2022 Customer Management Tools: Offer features like account management, customer reviews, and ratings to improve customer satisfaction\n\u2022 Scalability: Build a platform that can handle increased traffic and customer demands without compromising performance\n\u2022 Mobile Accessibility: Ensure the platform is responsive and accessible on various devices, enhancing the shopping experience for users. These features are essential for creating a competitive edge in the rapidly growing B2C market",
+      "salaryDisplay": "$90,000 \u2013 $120,000/yr",
       "listingSource": null,
-      "jobPublisher": "BeBee",
-      "jobMinSalary": null,
-      "jobMaxSalary": null,
+      "jobPublisher": "Ladders",
+      "jobMinSalary": 90000,
+      "jobMaxSalary": 120000,
       "jobMedianSalary": null,
       "jobSalaryCurrency": null,
-      "jobSalaryPeriod": null,
+      "jobSalaryPeriod": "YEAR",
       "jobCity": "Toronto",
       "jobState": "Ontario",
       "jobCountry": "CA",
       "jobLocation": "Toronto, ON, Canada",
-      "employerName": "School Result",
+      "employerName": "Inficare Technologies",
       "applyOptions": [
         {
-          "publisher": "BeBee",
-          "applyLink": "https://bebee.com/ca/jobs/software-engineer-entry-level-remote-toronto-on-70000110000-equity-school-result-toronto-on-canada--jobgoal-22543_1f5157744d2071f236a4d14bc1e534db-1458055147"
+          "publisher": "Ladders",
+          "applyLink": "https://www.theladders.com/job/senior-software-engineer-python-web-api-inficare-technologies-toronto-on_86555088"
         }
       ],
       "aiSummary": null,
       "aiOfficeLocationToronto": null,
-      "aiSummaryError": "Error code: 429 - {'error': {'message': 'Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01knwxfj6pegdbehamn1tppdr7` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 198376, Requested 1813. Please try again in 1m21.648s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}"
+      "aiSummaryError": "HTTP 429: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \",\n    \"status\": \"RESOURCE_EXHAUSTED\",\n    \"details\": ["
     },
     {
       "id": "bMfgFwpJrWyBSepsAAAAAA==",
@@ -157,38 +157,38 @@
       ],
       "aiSummary": null,
       "aiOfficeLocationToronto": null,
-      "aiSummaryError": "Error code: 429 - {'error': {'message': 'Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01knwxfj6pegdbehamn1tppdr7` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 198374, Requested 2422. Please try again in 5m43.872s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}"
+      "aiSummaryError": "HTTP 429: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \",\n    \"status\": \"RESOURCE_EXHAUSTED\",\n    \"details\": ["
     },
     {
-      "id": "7hnxxQMiGjrX5P6RAAAAAA==",
-      "title": "Senior Software Engineer (Python + Web API)",
-      "company": "Inficare Technologies",
+      "id": "xIfUw2Hgl7siQ6I9AAAAAA==",
+      "title": "Software Engineer (Entry Level) | Remote (Toronto, ON) | $70,000\u2013$110,000 + Equity",
+      "company": "School Result",
       "location": "Toronto, ON, Canada",
-      "postedAt": "2026-04-18T03:00:00.000Z",
-      "postedDisplay": "Apr 18, 2026",
-      "description": "Title: Senior Software Engineer (Python, Web API)\n\nLocation: Toronto, Canada (All 5 Days Onsite)\n\nDuration: Long Term\n\nJob Description:\n\nMandatory Keep Points:\n\u2022 Candidate should have python coding and feature development experience.\n\u2022 Candidates must have mentioned functional details around the Features that they have built - User Experience, Payment Gateways, Customer Management, Scalability and\u00a0Mobile Accessibility\n\u2022 Technical skills: Flask, Fast API, Django\n\u2022 Must have Canadian University Graduates/Masters\n\u2022 Profiles should have more presence/details around the Features built and to develop a successful B2C platform, consider the following key features:\n\u2022 User Experience: Implement advanced search capabilities, product catalogs, and a streamlined checkout process to enhance user engagement\n\u2022 and conversion rates\n\u2022 Payment Gateways: Integrate secure payment processing methods to facilitate secure transactions\n\u2022 Customer Management Tools: Offer features like account management, customer reviews, and ratings to improve customer satisfaction\n\u2022 Scalability: Build a platform that can handle increased traffic and customer demands without compromising performance\n\u2022 Mobile Accessibility: Ensure the platform is responsive and accessible on various devices, enhancing the shopping experience for users. These features are essential for creating a competitive edge in the rapidly growing B2C market",
-      "salaryDisplay": "$90,000 \u2013 $120,000/yr",
+      "postedAt": "2026-04-16T00:00:00.000Z",
+      "postedDisplay": "Apr 16, 2026",
+      "description": "Software Engineer (Entry Level) | Remote (Toronto, ON) | $70,000\u2013$110,000 + Equity\n\nJerry is hiring an entry-level Software Engineer to join its fast-growing engineering team. This full-time remote role is based in the Greater Toronto Area and offers a competitive salary, equity, and a chance to make real-world impact from day one. If you\u2019re curious, driven, and excited to build user-first software in a high-growth startup, this is your opportunity to grow fast and ship meaningful code.\n\n\u2022 Job Title: Software Engineer I (Entry Level)\n\n\u2022 Company: Jerry\n\n\u2022 Salary: $70,000\u2013$110,000 CAD per year + stock options\n\n\u2022 Contract Type: Full-Time\n\n\u2022 Benefits: Health, dental, vision, paid time off, paid parental leave, RRSP with employer matching, wellness benefits, and equity opportunities\n\nAbout Jerry\n\nJerry is building the first AI-powered AllCar\u2122 app to simplify car ownership\u2014from insurance and maintenance to repairs and financing. With over $240M raised and cash-flow positive operations, Jerry has grown revenue 60x in five years and helped users save over $1,000 annually. Now scaling from 5M to 50M users, Jerry is expanding its engineering team in Toronto to fuel the next phase of growth.\nRole Overview\n\nAs a Software Engineer I, you\u2019ll join one of Jerry\u2019s engineering pods\u2014core app, retention, or automation\u2014based on your interests and strengths. You\u2019ll write production code within your first few weeks, collaborate closely with product teams, and contribute to projects that directly impact millions of users.\nKey Responsibilities\n\n\u2022 Write and ship production code early and often\n\n\u2022 Collaborate with product and engineering teams to deliver user-first features\n\n\u2022 Contribute to scalable, high-quality software across the stack\n\n\u2022 Participate in code reviews, standups, and agile development cycles\n\n\u2022 Learn from experienced engineers and grow your technical skillset\n\n\u2022 Explore areas like automation, retention, and AI-powered features\n\n\u2022 Frontend: React, React Native\n\n\u2022 Infrastructure: AWS, Go, Python, Docker, CI/CD\n\n\u2022 AI/ML: Python pipelines, LLM integrations, internal models\n\nRequired Skills and Experience\n\n\u2022 Bachelor\u2019s degree in Computer or Software Engineering, or a related field\n\n\u2022 Passion for learning and building high-quality softwareComfort with ambiguity and fast-paced environments\n\n\u2022 Curiosity, hustle, and a user-first mindset\n\n\u2022 Internship, co-op, or side project experience\n\n\u2022 Familiarity with any part of Jerry\u2019s tech stack\n\nWhat We Offer\n\n\u2022 $70,000\u2013$110,000 base salary (based on experience and market conditions)\n\n\u2022 Stock options and equity opportunities\n\n\u2022 Comprehensive benefits package for full-time employees\n\n\u2022 Mentorship from engineers with backgrounds at Nvidia, TikTok, Cepton\n\n\u2022 Merit-based growth and career development\n\n\u2022 Remote-first culture with a Toronto-based team\n\nHow to Apply\n\nIf you\u2019re ready to build impactful software and grow your career in a high-growth startup, click here to apply directly via Jerry\u2019s careers portal.",
+      "salaryDisplay": null,
       "listingSource": null,
-      "jobPublisher": "Ladders",
-      "jobMinSalary": 90000,
-      "jobMaxSalary": 120000,
+      "jobPublisher": "BeBee",
+      "jobMinSalary": null,
+      "jobMaxSalary": null,
       "jobMedianSalary": null,
       "jobSalaryCurrency": null,
-      "jobSalaryPeriod": "YEAR",
+      "jobSalaryPeriod": null,
       "jobCity": "Toronto",
       "jobState": "Ontario",
       "jobCountry": "CA",
       "jobLocation": "Toronto, ON, Canada",
-      "employerName": "Inficare Technologies",
+      "employerName": "School Result",
       "applyOptions": [
         {
-          "publisher": "Ladders",
-          "applyLink": "https://www.theladders.com/job/senior-software-engineer-python-web-api-inficare-technologies-toronto-on_86555088"
+          "publisher": "BeBee",
+          "applyLink": "https://bebee.com/ca/jobs/software-engineer-entry-level-remote-toronto-on-70000110000-equity-school-result-toronto-on-canada--jobgoal-22543_1f5157744d2071f236a4d14bc1e534db-1458055147"
         }
       ],
-      "aiSummary": "Senior Software Engineer role focusing on Python development of web APIs and B2C platforms. Responsibilities include designing and implementing features such as user experience enhancements, payment gateway integration, customer management tools, scalability solutions, and mobile accessibility.\nQualifications:\n- Strong Python coding experience with Flask, FastAPI, or Django\n- Proven track record of building end-to-end features for B2C platforms\n- Experience with advanced search, product catalogs, checkout flows, and payment integrations\n- Ability to design scalable systems handling high traffic\n- Expertise in responsive design for mobile accessibility\n- Canadian university degree (Bachelor\u2019s or Master\u2019s)\n- Excellent problem-solving and communication skills",
+      "aiSummary": null,
       "aiOfficeLocationToronto": null,
-      "aiSummaryError": null
+      "aiSummaryError": "HTTP 429: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \",\n    \"status\": \"RESOURCE_EXHAUSTED\",\n    \"details\": ["
     },
     {
       "id": "sIIu5KvRACiDQBSTAAAAAA==",
@@ -219,7 +219,7 @@
       ],
       "aiSummary": null,
       "aiOfficeLocationToronto": null,
-      "aiSummaryError": "Error code: 429 - {'error': {'message': 'Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01knwxfj6pegdbehamn1tppdr7` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 200000, Requested 1947. Please try again in 14m1.104s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}"
+      "aiSummaryError": "HTTP 429: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \",\n    \"status\": \"RESOURCE_EXHAUSTED\",\n    \"details\": ["
     },
     {
       "id": "Aa2V8rRev4kOc9D6AAAAAA==",
@@ -250,7 +250,7 @@
       ],
       "aiSummary": null,
       "aiOfficeLocationToronto": null,
-      "aiSummaryError": "Error code: 429 - {'error': {'message': 'Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01knwxfj6pegdbehamn1tppdr7` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 199998, Requested 1684. Please try again in 12m6.624s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}"
+      "aiSummaryError": "HTTP 429: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \",\n    \"status\": \"RESOURCE_EXHAUSTED\",\n    \"details\": ["
     },
     {
       "id": "NdOvjnc5se5c8_5BAAAAAA==",
@@ -281,7 +281,7 @@
       ],
       "aiSummary": null,
       "aiOfficeLocationToronto": null,
-      "aiSummaryError": "Error code: 429 - {'error': {'message': 'Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01knwxfj6pegdbehamn1tppdr7` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 199995, Requested 1585. Please try again in 11m22.56s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}"
+      "aiSummaryError": "HTTP 429: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \",\n    \"status\": \"RESOURCE_EXHAUSTED\",\n    \"details\": ["
     },
     {
       "id": "D3PLjMkxT9ug0kmaAAAAAA==",
@@ -312,7 +312,7 @@
       ],
       "aiSummary": null,
       "aiOfficeLocationToronto": null,
-      "aiSummaryError": "Error code: 429 - {'error': {'message': 'Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01knwxfj6pegdbehamn1tppdr7` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 199993, Requested 2192. Please try again in 15m43.92s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}"
+      "aiSummaryError": "HTTP 429: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \",\n    \"status\": \"RESOURCE_EXHAUSTED\",\n    \"details\": ["
     }
   ]
 }

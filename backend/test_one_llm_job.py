@@ -54,9 +54,9 @@ def _load_cached_first_job_description(path: Path) -> tuple[str, str | None] | N
 
 async def _run(description: str, company: str | None = None) -> None:
     settings = get_settings()
-    key = settings.groq_api_key.strip()
+    key = settings.google_api_key.strip()
     if not key:
-        raise RuntimeError("GROQ_API_KEY is not configured.")
+        raise RuntimeError("GOOGLE_API_KEY is not configured.")
 
     summaries = await summarize_job_descriptions(
         [
@@ -67,7 +67,7 @@ async def _run(description: str, company: str | None = None) -> None:
             )
         ],
         api_key=key,
-        model=settings.groq_model.strip(),
+        model=settings.gemini_model.strip(),
     )
     if not summaries:
         print("No summary returned.")

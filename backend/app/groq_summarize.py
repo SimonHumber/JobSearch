@@ -1,4 +1,4 @@
-"""Batch job-description summaries via Groq."""
+"""Batch job-description summaries via Gemini."""
 
 from __future__ import annotations
 
@@ -7,14 +7,15 @@ import json
 import time
 import re
 
-from groq import Groq
+import httpx
 
 from app.schemas import JobDescriptionIn, JobSummaryOut
 
 _MAX_DESC_CHARS = 24_000
-_LLM_CALL_INTERVAL_SECONDS = 1.0
+_LLM_CALL_INTERVAL_SECONDS = 2
+_GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta"
 
-_SYSTEM_SUMMARY_NO_BROWSER = (
+_SYSTEM_SUMMARY_WITH_SEARCH = (
     "Return a valid JSON object with exactly three keys: "
     "'description', 'salary', and 'office_location_toronto'. "
     "Keep the output strictly JSON; no preamble or conversational filler."
@@ -28,19 +29,9 @@ _SYSTEM_SUMMARY_NO_BROWSER = (
     "followed by a list of qualifications. Use standard dashes (-) for bullets and "
     "newline characters (\\n) for spacing. Avoid all Markdown formatting like bolding (**) or headers (#)."
     "\n\n"
-    "3. For 'office_location_toronto': use only the provided job text. "
-    "Do not call tools or browse externally. Return only a Toronto office STREET ADDRESS "
-    "(street number + street name + Toronto) when explicit. "
-    "If not found, return null."
-)
-
-_SYSTEM_OFFICE_WITH_BROWSER = (
-    "Return a valid JSON object with exactly one key: 'office_location_toronto'. "
-    "Keep the output strictly JSON; no preamble or conversational filler."
-    "You may use browser search tools.\n\n"
-    "Find the employer's Toronto office STREET ADDRESS (not broad area) using the provided context and browser search.\n"
-    "Return a precise address-like string (street number + street name, with Toronto) when found.\n"
-    "If only broad location is found, return null."
+    "3. For 'office_location_toronto': use provided context and web search. "
+    "You may use search tools. Return only a Toronto office STREET ADDRESS "
+    "(street number + street name + Toronto) when explicit. If not found, return null."
 )
 
 
@@ -54,14 +45,14 @@ def _strip_json_fence(content: str) -> str:
 
 def _parse_llm_json(content: str) -> tuple[str, str | None, str | None]:
     raw = _strip_json_fence(content)
+    decoder = json.JSONDecoder()
     try:
         data = json.loads(raw)
     except json.JSONDecodeError:
         start = raw.find("{")
-        end = raw.rfind("}")
-        if start == -1 or end == -1 or end <= start:
+        if start == -1:
             raise
-        data = json.loads(raw[start : end + 1])
+        data, _ = decoder.raw_decode(raw[start:])
     if not isinstance(data, dict):
         raise ValueError("JSON root must be an object")
     desc = data.get("description")
@@ -79,58 +70,46 @@ def _parse_llm_json(content: str) -> tuple[str, str | None, str | None]:
     return description, salary, office_location_toronto
 
 
-def _looks_like_toronto_address(value: str | None) -> bool:
-    if not value:
-        return False
-    s = value.strip()
-    if not s:
-        return False
-    has_number = bool(re.search(r"\b\d{1,6}\b", s))
-    has_street_word = bool(
-        re.search(
-            r"\b(street|st\.?|avenue|ave\.?|road|rd\.?|boulevard|blvd\.?|drive|dr\.?|lane|ln\.?|way|court|ct\.?|quay|place|pl\.?)\b",
-            s,
-            flags=re.IGNORECASE,
-        )
-    )
-    has_toronto = bool(re.search(r"\btoronto\b", s, flags=re.IGNORECASE))
-    return has_number and has_street_word and has_toronto
-
-
-def _extract_message_content(choice: object) -> str:
-    content = str(getattr(choice, "content", "") or "").strip()
-    if not content:
-        content = str(getattr(choice, "reasoning", "") or "").strip()
-    return content
-
-
-def _parse_office_only_json(content: str) -> str | None:
-    raw = _strip_json_fence(content)
-    try:
-        data = json.loads(raw)
-    except json.JSONDecodeError:
-        start = raw.find("{")
-        end = raw.rfind("}")
-        if start == -1 or end == -1 or end <= start:
-            return None
-        data = json.loads(raw[start : end + 1])
-    if not isinstance(data, dict):
-        return None
-    office = data.get("office_location_toronto")
-    if office is None:
-        return None
-    office_text = str(office).strip() or None
-    return office_text
-
-
-def _extract_usage_counts(completion: object) -> tuple[int | None, int | None, int | None]:
-    usage = getattr(completion, "usage", None)
-    if usage is None:
+def _extract_usage_counts(
+    payload: dict[str, object],
+) -> tuple[int | None, int | None, int | None]:
+    usage = payload.get("usageMetadata")
+    if not isinstance(usage, dict):
         return None, None, None
-    prompt_tokens = getattr(usage, "prompt_tokens", None)
-    completion_tokens = getattr(usage, "completion_tokens", None)
-    total_tokens = getattr(usage, "total_tokens", None)
+    prompt_tokens = usage.get("promptTokenCount")
+    completion_tokens = usage.get("candidatesTokenCount")
+    total_tokens = usage.get("totalTokenCount")
+    if not isinstance(prompt_tokens, int):
+        prompt_tokens = None
+    if not isinstance(completion_tokens, int):
+        completion_tokens = None
+    if not isinstance(total_tokens, int):
+        total_tokens = None
     return prompt_tokens, completion_tokens, total_tokens
+
+
+def _extract_candidate_text(payload: dict[str, object]) -> str:
+    candidates = payload.get("candidates")
+    if not isinstance(candidates, list) or not candidates:
+        return ""
+    first = candidates[0]
+    if not isinstance(first, dict):
+        return ""
+    content = first.get("content")
+    if not isinstance(content, dict):
+        return ""
+    parts = content.get("parts")
+    if not isinstance(parts, list):
+        return ""
+    chunks: list[str] = []
+    for part in parts:
+        if not isinstance(part, dict):
+            continue
+        text = part.get("text")
+        if text is None:
+            continue
+        chunks.append(str(text))
+    return "\n".join(chunks).strip()
 
 
 def _summarize_one(
@@ -138,7 +117,8 @@ def _summarize_one(
     description_text: str,
     company: str | None,
     *,
-    client: Groq,
+    client: httpx.Client,
+    api_key: str,
     model: str,
 ) -> JobSummaryOut:
     text = (description_text or "").strip()
@@ -153,83 +133,31 @@ def _summarize_one(
         if company_text
         else truncated
     )
-    model_name = (model or "").strip().lower()
-    is_gpt_oss = "gpt-oss" in model_name
     try:
-        # Pass 1: summarize + salary; office only from provided text (no browsing).
-        summary_kwargs: dict[str, object] = {}
-        if is_gpt_oss:
-            summary_kwargs["response_format"] = {"type": "json_object"}
-        summary_completion = client.chat.completions.create(
-            model=model,
-            messages=[
-                {"role": "system", "content": _SYSTEM_SUMMARY_NO_BROWSER},
-                {"role": "user", "content": user_msg},
-            ],
-            temperature=0.2,
-            max_tokens=900,
-            **summary_kwargs,
+        response = client.post(
+            f"{_GEMINI_BASE_URL}/models/{model}:generateContent",
+            headers={"x-goog-api-key": api_key, "Content-Type": "application/json"},
+            json={
+                "system_instruction": {
+                    "parts": [{"text": _SYSTEM_SUMMARY_WITH_SEARCH}]
+                },
+                "contents": [{"role": "user", "parts": [{"text": user_msg}]}],
+                "tools": [{"google_search": {}}],
+                "generationConfig": {
+                    "temperature": 0.2,
+                    "maxOutputTokens": 900,
+                },
+            },
         )
-        p1_prompt, p1_completion, p1_total = _extract_usage_counts(summary_completion)
+        response.raise_for_status()
+        payload = response.json()
+        p1_prompt, p1_completion, p1_total = _extract_usage_counts(payload)
         print(
             f"[llm][{job_id}] prompt1 tokens "
             f"prompt={p1_prompt} completion={p1_completion} total={p1_total}"
         )
-        choice = summary_completion.choices[0].message
-        content = _extract_message_content(choice)
-        try:
-            description, salary, office_location_toronto = _parse_llm_json(content)
-        except Exception:
-            reasoning = str(getattr(choice, "reasoning", "") or "").strip()
-            if reasoning and reasoning != content:
-                description, salary, office_location_toronto = _parse_llm_json(
-                    reasoning
-                )
-            else:
-                raise
-
-        # Keep only address-like office values from pass 1.
-        if office_location_toronto and not _looks_like_toronto_address(
-            office_location_toronto
-        ):
-            office_location_toronto = None
-
-        # Pass 2: run focused browser-search lookup only when office is null.
-        if office_location_toronto is None:
-            company_text = (company or "").strip() or "Unknown"
-            office_prompt = (
-                "Company context:\n"
-                f"{company_text}\n\n"
-                "Find a Toronto office street address for this employer."
-            )
-            try:
-                office_completion = client.chat.completions.create(
-                    model=model,
-                    messages=[
-                        {"role": "system", "content": _SYSTEM_OFFICE_WITH_BROWSER},
-                        {"role": "user", "content": office_prompt},
-                    ],
-                    tools=[{"type": "browser_search"}],
-                    temperature=0.0,
-                    max_tokens=220,
-                )
-                p2_prompt, p2_completion, p2_total = _extract_usage_counts(
-                    office_completion
-                )
-                print(
-                    f"[llm][{job_id}] prompt2 tokens "
-                    f"prompt={p2_prompt} completion={p2_completion} total={p2_total}"
-                )
-                office_choice = office_completion.choices[0].message
-                office_content = _extract_message_content(office_choice)
-                office_from_web = _parse_office_only_json(office_content)
-                office_location_toronto = (
-                    office_from_web
-                    if _looks_like_toronto_address(office_from_web)
-                    else None
-                )
-            except Exception:
-                office_location_toronto = None
+        content = _extract_candidate_text(payload)
+        description, salary, office_location_toronto = _parse_llm_json(content)
 
         return JobSummaryOut(
             id=job_id,
@@ -237,6 +165,20 @@ def _summarize_one(
             salary=salary,
             office_location_toronto=office_location_toronto,
             error=None,
+        )
+    except httpx.HTTPStatusError as e:
+        body = ""
+        try:
+            body = e.response.text
+        except Exception:
+            body = ""
+        err = f"HTTP {e.response.status_code}: {body[:350]}".strip()
+        return JobSummaryOut(
+            id=job_id,
+            description="",
+            salary=None,
+            office_location_toronto=None,
+            error=err[:500],
         )
     except Exception as e:
         return JobSummaryOut(
@@ -257,26 +199,30 @@ async def summarize_job_descriptions(
     if not jobs:
         return []
 
-    client = Groq(api_key=api_key)
+    client = httpx.Client(timeout=90.0)
     out: list[JobSummaryOut] = []
     last_call_started_at: float | None = None
 
-    for job in jobs:
-        if last_call_started_at is not None:
-            elapsed = time.monotonic() - last_call_started_at
-            remaining = _LLM_CALL_INTERVAL_SECONDS - elapsed
-            if remaining > 0:
-                await asyncio.sleep(remaining)
-        last_call_started_at = time.monotonic()
-        out.append(
-            await asyncio.to_thread(
-                _summarize_one,
-                job.id,
-                job.description,
-                job.company,
-                client=client,
-                model=model,
+    try:
+        for job in jobs:
+            if last_call_started_at is not None:
+                elapsed = time.monotonic() - last_call_started_at
+                remaining = _LLM_CALL_INTERVAL_SECONDS - elapsed
+                if remaining > 0:
+                    await asyncio.sleep(remaining)
+            last_call_started_at = time.monotonic()
+            out.append(
+                await asyncio.to_thread(
+                    _summarize_one,
+                    job.id,
+                    job.description,
+                    job.company,
+                    client=client,
+                    api_key=api_key,
+                    model=model,
+                )
             )
-        )
+    finally:
+        client.close()
 
     return out

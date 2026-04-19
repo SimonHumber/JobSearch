@@ -18,8 +18,8 @@ class Settings(BaseSettings):
     jsearch_base: str = "https://jsearch.p.rapidapi.com"
     cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
 
-    groq_api_key: str = ""
-    groq_model: str = "openai/gpt-oss-120b"
+    google_api_key: str = ""
+    gemini_model: str = "gemma-4-31b-it"
 
 
 def get_settings() -> Settings:

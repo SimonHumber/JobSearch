@@ -114,10 +114,10 @@ async def generate_jobs_json(
     )
 
     settings = get_settings()
-    groq_key = settings.groq_api_key.strip()
-    if groq_key and jobs:
+    gemini_key = settings.google_api_key.strip()
+    if gemini_key and jobs:
         print(
-            f"[llm] Running summaries for {len(jobs)} jobs with model '{settings.groq_model.strip()}'"
+            f"[llm] Running summaries for {len(jobs)} jobs with model '{settings.gemini_model.strip()}'"
         )
         summaries = await summarize_job_descriptions(
             [
@@ -128,13 +128,13 @@ async def generate_jobs_json(
                 )
                 for j in jobs
             ],
-            api_key=groq_key,
-            model=settings.groq_model.strip(),
+            api_key=gemini_key,
+            model=settings.gemini_model.strip(),
         )
         _merge_summaries(jobs, [s.model_dump() for s in summaries])
         print("[llm] Summary merge complete")
-    elif not groq_key:
-        print("[llm] GROQ_API_KEY missing; skipping summaries")
+    elif not gemini_key:
+        print("[llm] GOOGLE_API_KEY missing; skipping summaries")
     else:
         print("[llm] No jobs returned; skipping summaries")
 
