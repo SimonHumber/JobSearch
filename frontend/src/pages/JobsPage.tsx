@@ -260,14 +260,36 @@ export function JobsPage() {
               </a>
             </div>
           </div>
-          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-            {queryLabel} roles in {locationLabel}.
-          </p>
-          {generatedAt ? (
-            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-              Feed generated at: {new Date(generatedAt).toLocaleString()}
-            </p>
-          ) : null}
+          {jobs.length > 0 && (
+            <div className="mt-3">
+              <button
+                type="button"
+                onClick={() => setFiltersOpen((v) => !v)}
+                aria-expanded={filtersOpen}
+                aria-controls="filters-panel"
+                className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M3 5h18M6 12h12M10 19h4" />
+                </svg>
+                <span>Filters</span>
+                {activeFilterCount > 0 && (
+                  <span className="rounded-full bg-indigo-600 px-1.5 py-0.5 text-xs font-semibold text-white">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </button>
+            </div>
+          )}
         </div>
       </header>
 
@@ -280,110 +302,86 @@ export function JobsPage() {
             {error}
           </div>
         )}
-        {jobs.length > 0 && (
-          <div className="mb-3 shrink-0 rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900/60">
-            <button
-              type="button"
-              onClick={() => setFiltersOpen((v) => !v)}
-              aria-expanded={filtersOpen}
-              aria-controls="filters-panel"
-              className="flex w-full items-center justify-between gap-2 px-4 py-2.5 text-left text-sm font-medium text-slate-800 transition hover:bg-slate-50 dark:text-slate-100 dark:hover:bg-slate-800/60"
-            >
-              <span className="flex items-center gap-2">
-                <svg
-                  viewBox="0 0 24 24"
-                  className={`h-4 w-4 transition-transform ${filtersOpen ? 'rotate-90' : ''}`}
-                  aria-hidden="true"
+        {jobs.length > 0 && filtersOpen && (
+          <div
+            id="filters-panel"
+            className="mb-3 shrink-0 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-slate-700 dark:bg-slate-900/60"
+          >
+            <div className="mb-3 border-b border-slate-200 pb-3 dark:border-slate-700">
+              <p className="text-sm text-slate-700 dark:text-slate-200">
+                {queryLabel} roles in {locationLabel}.
+              </p>
+              {generatedAt && (
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  Feed generated at: {new Date(generatedAt).toLocaleString()}
+                </p>
+              )}
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                Showing {sortedJobs.length} of {jobs.length} jobs
+              </p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                  checked={filterJustSalary}
+                  onChange={(e) => setFilterJustSalary(e.target.checked)}
+                />
+                Only jobs with salary
+              </label>
+              <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                  checked={filterCompaniesWithAddress}
+                  onChange={(e) => setFilterCompaniesWithAddress(e.target.checked)}
+                />
+                Only companies with address
+              </label>
+              <label className="flex flex-col gap-1 text-sm text-slate-700 dark:text-slate-200">
+                <span>Search company</span>
+                <input
+                  type="text"
+                  value={companySearch}
+                  onChange={(e) => setCompanySearch(e.target.value)}
+                  placeholder="e.g. shopify"
+                  className="rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-sm text-slate-700 dark:text-slate-200">
+                <span>Search description</span>
+                <input
+                  type="text"
+                  value={descriptionSearch}
+                  onChange={(e) => setDescriptionSearch(e.target.value)}
+                  placeholder="e.g. typescript"
+                  className="rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-sm text-slate-700 dark:text-slate-200 sm:col-span-2">
+                <span>Sort by</span>
+                <select
+                  value={sortMode}
+                  onChange={(e) => setSortMode(e.target.value as SortMode)}
+                  className="rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
                 >
-                  <path
-                    fill="currentColor"
-                    d="M9 6l6 6-6 6"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-                Filters &amp; sort
-                {activeFilterCount > 0 && (
-                  <span className="rounded-full bg-indigo-600 px-2 py-0.5 text-xs font-semibold text-white">
-                    {activeFilterCount}
-                  </span>
-                )}
-              </span>
-              <span className="text-xs text-slate-500 dark:text-slate-400">
-                {sortedJobs.length} of {jobs.length} jobs
-              </span>
-            </button>
-            {filtersOpen && (
-              <div
-                id="filters-panel"
-                className="border-t border-slate-200 px-4 py-3 dark:border-slate-700"
-              >
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
-                    <input
-                      type="checkbox"
-                      className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                      checked={filterJustSalary}
-                      onChange={(e) => setFilterJustSalary(e.target.checked)}
-                    />
-                    Only jobs with salary
-                  </label>
-                  <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
-                    <input
-                      type="checkbox"
-                      className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                      checked={filterCompaniesWithAddress}
-                      onChange={(e) => setFilterCompaniesWithAddress(e.target.checked)}
-                    />
-                    Only companies with address
-                  </label>
-                  <label className="flex flex-col gap-1 text-sm text-slate-700 dark:text-slate-200">
-                    <span>Search company</span>
-                    <input
-                      type="text"
-                      value={companySearch}
-                      onChange={(e) => setCompanySearch(e.target.value)}
-                      placeholder="e.g. shopify"
-                      className="rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-                    />
-                  </label>
-                  <label className="flex flex-col gap-1 text-sm text-slate-700 dark:text-slate-200">
-                    <span>Search description</span>
-                    <input
-                      type="text"
-                      value={descriptionSearch}
-                      onChange={(e) => setDescriptionSearch(e.target.value)}
-                      placeholder="e.g. typescript"
-                      className="rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-                    />
-                  </label>
-                  <label className="flex flex-col gap-1 text-sm text-slate-700 dark:text-slate-200 sm:col-span-2">
-                    <span>Sort by</span>
-                    <select
-                      value={sortMode}
-                      onChange={(e) => setSortMode(e.target.value as SortMode)}
-                      className="rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-                    >
-                      <option value="default">Default</option>
-                      <option value="salary">Salary (highest first)</option>
-                      <option value="newest">Newest first</option>
-                      <option value="oldest">Oldest first</option>
-                    </select>
-                  </label>
-                </div>
-                {activeFilterCount > 0 && (
-                  <div className="mt-3 flex justify-end">
-                    <button
-                      type="button"
-                      onClick={clearFilters}
-                      className="text-xs font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
-                    >
-                      Clear all
-                    </button>
-                  </div>
-                )}
+                  <option value="default">Default</option>
+                  <option value="salary">Salary (highest first)</option>
+                  <option value="newest">Newest first</option>
+                  <option value="oldest">Oldest first</option>
+                </select>
+              </label>
+            </div>
+            {activeFilterCount > 0 && (
+              <div className="mt-3 flex justify-end">
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="text-xs font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+                >
+                  Clear all
+                </button>
               </div>
             )}
           </div>
