@@ -22,8 +22,8 @@ _SYSTEM_PROMPT = (
 _RETRY_ATTEMPTS = 3
 _RETRY_BASE_SLEEP_SECONDS = 2.0
 _BATCH_COMMIT_EVERY = 5
-_CHECKPOINT_PATH = Path(__file__).resolve().with_name(
-    ".backfill_company_locations_checkpoint.json"
+_CHECKPOINT_PATH = (
+    Path(__file__).resolve().with_name(".backfill_company_locations_checkpoint.json")
 )
 _LLM_SKIP_COMPANIES = {
     "G2i Inc.",
@@ -67,7 +67,9 @@ def _save_checkpoint(last_completed_company_id: int) -> None:
         "last_completed_company_id": int(last_completed_company_id),
         "updated_at_unix": int(time.time()),
     }
-    _CHECKPOINT_PATH.write_text(json.dumps(payload, ensure_ascii=True), encoding="utf-8")
+    _CHECKPOINT_PATH.write_text(
+        json.dumps(payload, ensure_ascii=True), encoding="utf-8"
+    )
 
 
 def _clear_checkpoint() -> None:
@@ -410,9 +412,14 @@ def main() -> None:
                         failures += 1
                         print(f"[error] Row processing failed: {exc}")
                         text = str(exc).lower()
-                        if "connection is lost" in text or "server closed the connection" in text:
+                        if (
+                            "connection is lost" in text
+                            or "server closed the connection" in text
+                        ):
                             aborted_due_to_db_loss = True
-                            print("[run] Database connection lost; stopping early to preserve checkpoint")
+                            print(
+                                "[run] Database connection lost; stopping early to preserve checkpoint"
+                            )
                             break
                         continue
                 else:
@@ -428,17 +435,13 @@ def main() -> None:
                     f"[done] Dry run only. Candidate updates: {updated}, failures: {failures}"
                 )
                 if not args.no_resume:
-                    print(
-                        f"[done] Checkpoint unchanged: {_CHECKPOINT_PATH}"
-                    )
+                    print(f"[done] Checkpoint unchanged: {_CHECKPOINT_PATH}")
             else:
                 if aborted_due_to_db_loss:
                     print(
                         f"[done] Aborted after DB loss. Updates before abort: {updated}, failures: {failures}"
                     )
-                    print(
-                        f"[done] Resume next run from checkpoint: {_CHECKPOINT_PATH}"
-                    )
+                    print(f"[done] Resume next run from checkpoint: {_CHECKPOINT_PATH}")
                     return
                 conn.commit()
                 print(f"[done] Updated rows: {updated}, failures: {failures}")
