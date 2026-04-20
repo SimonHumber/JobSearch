@@ -29,9 +29,10 @@ _SYSTEM_SUMMARY_WITH_SEARCH = (
     "followed by a list of qualifications. Use standard dashes (-) for bullets and "
     "newline characters (\\n) for spacing. Avoid all Markdown formatting like bolding (**) or headers (#)."
     "\n\n"
-    "3. For 'office_location_toronto': use provided context and web search. "
-    "You may use search tools. Return only a STREET ADDRESS "
-    "(street number + street name + city) when explicit. If not found, return null."
+    "3. For 'office_location_toronto': ONLY use the provided job description text. "
+    "Do NOT use outside knowledge, do NOT guess, and do NOT use web search. "
+    "Return a STREET ADDRESS (street number + street name + city) ONLY if it is "
+    "explicitly written in the job description. Otherwise return null."
 )
 
 
@@ -142,7 +143,6 @@ def _summarize_one(
                     "parts": [{"text": _SYSTEM_SUMMARY_WITH_SEARCH}]
                 },
                 "contents": [{"role": "user", "parts": [{"text": user_msg}]}],
-                "tools": [{"google_search": {}}],
                 "generationConfig": {
                     "temperature": 0.2,
                     "maxOutputTokens": 900,

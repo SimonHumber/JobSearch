@@ -2,7 +2,7 @@ name: Backend Scheduled Ingest
 
 on:
   schedule:
-    - cron: "0 8 * * 0,3"
+    - cron: "0 8 * * 1,4"
   workflow_dispatch:
 
 jobs:
@@ -34,3 +34,11 @@ jobs:
           MAP_API_KEY: ${{ secrets.MAP_API_KEY }}
           GEMINI_MODEL: gemma-4-31b-it
         run: python dev.py
+
+      - name: Backfill missing company locations
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          MAP_API_KEY: ${{ secrets.MAP_API_KEY }}
+          GEMINI_MODEL: gemma-4-31b-it
+        run: python backfill_company_locations.py --no-resume 

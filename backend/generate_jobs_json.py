@@ -8,15 +8,29 @@ from typing import Any
 import httpx
 
 from app.config import get_settings
-from app.db import geocode_companies_missing_coords, init_db, replace_job_postings
+from app.db import (
+    geocode_companies_missing_coords,
+    init_db,
+    load_known_company_addresses,
+    replace_job_postings,
+)
 from app.groq_summarize import summarize_job_descriptions
 from app.schemas import JobDescriptionIn, JobOut
 
-DEFAULT_QUERY_JOB_TITLE = "software engineer"
+DEFAULT_QUERY_JOB_TITLE = "software engineer or software developer"
 DEFAULT_QUERY_LOCATION = "Toronto"
 DEFAULT_QUERY_PAGE = 1
-DEFAULT_QUERY_NUM_PAGES = 15
+DEFAULT_QUERY_NUM_PAGES = 30
 DEFAULT_SEARCH_RADIUS_KM = 25
+DEFAULT_DATE_POSTED = "any"
+
+_DATE_POSTED_CHIPS: dict[str, str] = {
+    "today": "date_posted:today",
+    "3days": "date_posted:3days",
+    "week": "date_posted:week",
+    "month": "date_posted:month",
+    "any": "",
+}
 
 
 def _build_query(job_title: str, location: str) -> str:
@@ -119,7 +133,9 @@ def _extract_serp_apply_options(item: dict[str, Any]) -> list[dict[str, str]]:
     return out
 
 
-def _serp_item_to_job_dict(item: dict[str, Any], query: str, index: int) -> dict[str, Any]:
+def _serp_item_to_job_dict(
+    item: dict[str, Any], query: str, index: int
+) -> dict[str, Any]:
     title = str(item.get("title") or "").strip() or "Untitled role"
     company = str(item.get("company_name") or item.get("company") or "").strip()
     location = str(item.get("location") or "").strip() or "Location not listed"
@@ -167,10 +183,14 @@ async def _fetch_jobs(
     location: str,
     page: int,
     num_pages: int,
+    date_posted: str,
 ) -> list[dict[str, Any]]:
+    chip_value = _DATE_POSTED_CHIPS.get(
+        date_posted, _DATE_POSTED_CHIPS[DEFAULT_DATE_POSTED]
+    )
     print(
         f"[fetch] Querying SerpApi Google Jobs for '{job_title}' in '{location}' "
-        f"(page={page}, num_pages={num_pages})"
+        f"(page={page}, num_pages={num_pages}, date_posted={date_posted})"
     )
     settings = get_settings()
     key = settings.serpapi_key.strip()
@@ -190,7 +210,7 @@ async def _fetch_jobs(
     async with httpx.AsyncClient(timeout=120.0) as client:
         for offset in range(num_pages):
             request_label = f"page={page + offset}"
-            params = {
+            params: dict[str, Any] = {
                 "engine": "google_jobs",
                 "q": query,
                 "api_key": key,
@@ -198,6 +218,8 @@ async def _fetch_jobs(
                 "location": location,
                 "lrad": DEFAULT_SEARCH_RADIUS_KM,
             }
+            if chip_value:
+                params["chips"] = chip_value
             if next_page_token:
                 params["next_page_token"] = next_page_token
             response = await client.get(url, params=params)
@@ -208,7 +230,9 @@ async def _fetch_jobs(
                 )
 
             payload = response.json()
-            page_jobs = payload.get("jobs_results") if isinstance(payload, dict) else None
+            page_jobs = (
+                payload.get("jobs_results") if isinstance(payload, dict) else None
+            )
             if not isinstance(page_jobs, list):
                 page_jobs = []
 
@@ -250,12 +274,21 @@ def _merge_summaries(
 ) -> None:
     by_id = {str(s.get("id")): s for s in summaries}
     for job in jobs:
+        prefilled = bool(job.get("_prefilled_office_location"))
+        prefilled_address = (
+            str(job.get("aiOfficeLocationToronto") or "").strip() if prefilled else ""
+        )
+
         sid = str(job.get("id"))
         s = by_id.get(sid)
         if not s:
             job["aiSummary"] = None
-            job["aiOfficeLocationToronto"] = None
+            if prefilled and prefilled_address:
+                job["aiOfficeLocationToronto"] = prefilled_address
+            else:
+                job["aiOfficeLocationToronto"] = None
             job["aiSummaryError"] = "No summary returned for this job."
+            job.pop("_prefilled_office_location", None)
             continue
 
         desc = (s.get("description") or "").strip()
@@ -266,8 +299,12 @@ def _merge_summaries(
         if salary and not str(job.get("salaryDisplay") or "").strip():
             job["salaryDisplay"] = salary
         job["aiSummary"] = desc or None
-        job["aiOfficeLocationToronto"] = office or None
+        if prefilled and prefilled_address:
+            job["aiOfficeLocationToronto"] = prefilled_address
+        else:
+            job["aiOfficeLocationToronto"] = office or None
         job["aiSummaryError"] = err or None
+        job.pop("_prefilled_office_location", None)
 
 
 async def generate_jobs_json(
@@ -276,6 +313,7 @@ async def generate_jobs_json(
     location: str,
     page: int,
     num_pages: int,
+    date_posted: str,
 ) -> None:
     print("[run] Starting jobs feed generation")
     jobs = await _fetch_jobs(
@@ -283,9 +321,36 @@ async def generate_jobs_json(
         location=location,
         page=page,
         num_pages=num_pages,
+        date_posted=date_posted,
     )
 
     settings = get_settings()
+
+    db_url = settings.postgres_url
+    if not db_url:
+        raise RuntimeError("Set SUPABASE_URL (or DATABASE_URL) in backend/.env.")
+    print("[db] Initializing database schema")
+    init_db(db_url)
+
+    known_addresses: dict[str, str] = {}
+    if jobs:
+        known_addresses = load_known_company_addresses(db_url)
+        print(f"[db] Loaded {len(known_addresses)} known company addresses")
+        prefilled_count = 0
+        for job in jobs:
+            company_name = str(job.get("company") or "").strip()
+            if not company_name:
+                continue
+            known = known_addresses.get(company_name)
+            if known:
+                job["aiOfficeLocationToronto"] = known
+                job["_prefilled_office_location"] = True
+                prefilled_count += 1
+        if prefilled_count:
+            print(
+                f"[db] Pre-filled office address for {prefilled_count} job(s) from companies table"
+            )
+
     gemini_key = settings.google_api_key.strip()
     if gemini_key and jobs:
         print(
@@ -310,11 +375,6 @@ async def generate_jobs_json(
     else:
         print("[llm] No jobs returned; skipping summaries")
 
-    db_url = settings.postgres_url
-    if not db_url:
-        raise RuntimeError("Set SUPABASE_URL (or DATABASE_URL) in backend/.env.")
-    print("[db] Initializing database schema")
-    init_db(db_url)
     print("[db] Replacing job_postings contents")
     replace_job_postings(db_url, jobs)
     print("[geo] Geocoding companies with known address but missing coordinates")
@@ -331,6 +391,12 @@ def main() -> None:
     parser.add_argument("--location", default=DEFAULT_QUERY_LOCATION)
     parser.add_argument("--page", type=int, default=DEFAULT_QUERY_PAGE)
     parser.add_argument("--num-pages", type=int, default=DEFAULT_QUERY_NUM_PAGES)
+    parser.add_argument(
+        "--date-posted",
+        choices=sorted(_DATE_POSTED_CHIPS.keys()),
+        default=DEFAULT_DATE_POSTED,
+        help="Filter by posting date (default: 3days).",
+    )
     args = parser.parse_args()
 
     asyncio.run(
@@ -339,6 +405,7 @@ def main() -> None:
             location=args.location,
             page=max(1, args.page),
             num_pages=max(1, min(50, args.num_pages)),
+            date_posted=args.date_posted,
         )
     )
     print("Database ingest complete.")

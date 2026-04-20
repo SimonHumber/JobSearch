@@ -47,6 +47,26 @@ def init_db(database_url: str) -> None:
         conn.commit()
 
 
+def load_known_company_addresses(database_url: str) -> dict[str, str]:
+    """Return a {company_name: address} map for companies with a known address."""
+    out: dict[str, str] = {}
+    with psycopg.connect(database_url) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT name, address
+                FROM companies
+                WHERE address IS NOT NULL AND btrim(address) <> '';
+                """
+            )
+            for row in cur.fetchall():
+                name = str(row[0] or "").strip()
+                address = str(row[1] or "").strip()
+                if name and address:
+                    out[name] = address
+    return out
+
+
 def replace_job_postings(
     database_url: str,
     jobs: list[dict[str, Any]],
