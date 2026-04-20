@@ -56,46 +56,6 @@ export function JobDetailPanel({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <header className="shrink-0 border-b border-slate-200 px-5 pb-4 pt-6 dark:border-slate-700 sm:px-8 sm:pt-8">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
-            {jobTitle(job)}
-          </h2>
-          <button
-            type="button"
-            disabled={!hasApplyUrls}
-            onClick={() => setApplyOpen(true)}
-            title={
-              hasApplyUrls ? 'View where to apply' : 'No apply links available for this listing'
-            }
-            className="shrink-0 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 disabled:shadow-none dark:disabled:bg-slate-600 dark:disabled:text-slate-400"
-          >
-            Apply
-          </button>
-        </div>
-        <p className="mt-1 text-base font-medium text-slate-800 dark:text-slate-200">
-          {displayEmployer(job)}
-        </p>
-        <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-          {formatJobLocation(job)}
-          {posted ? ` · Posted ${posted}` : ''}
-        </p>
-        {officeLocationToronto ? (
-          <p className="mt-1 text-sm font-medium text-slate-700 dark:text-slate-300">
-            Toronto office location: {officeLocationToronto}
-          </p>
-        ) : null}
-        {salary && (
-          <p className="mt-2 text-sm font-semibold text-emerald-700 dark:text-emerald-400">
-            Salary: {salary}
-          </p>
-        )}
-        {source && (
-          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            Listing source: {source}
-          </p>
-        )}
-      </header>
       <ApplyOptionsModal
         open={applyOpen && hasApplyUrls}
         onClose={() => setApplyOpen(false)}
@@ -106,6 +66,46 @@ export function JobDetailPanel({
         ref={bodyRef}
         className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4 sm:px-8 sm:py-6"
       >
+        <header className="mb-6 border-b border-slate-200 pb-4 dark:border-slate-700">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+              {jobTitle(job)}
+            </h2>
+            <button
+              type="button"
+              disabled={!hasApplyUrls}
+              onClick={() => setApplyOpen(true)}
+              title={
+                hasApplyUrls ? 'View where to apply' : 'No apply links available for this listing'
+              }
+              className="shrink-0 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 disabled:shadow-none dark:disabled:bg-slate-600 dark:disabled:text-slate-400"
+            >
+              Apply
+            </button>
+          </div>
+          <p className="mt-1 text-base font-medium text-slate-800 dark:text-slate-200">
+            {displayEmployer(job)}
+          </p>
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+            {formatJobLocation(job)}
+            {posted ? ` · Posted ${posted}` : ''}
+          </p>
+          {officeLocationToronto ? (
+            <p className="mt-1 text-sm font-medium text-slate-700 dark:text-slate-300">
+              Toronto office location: {officeLocationToronto}
+            </p>
+          ) : null}
+          {salary && (
+            <p className="mt-2 text-sm font-semibold text-emerald-700 dark:text-emerald-400">
+              Salary: {salary}
+            </p>
+          )}
+          {source && (
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              Listing source: {source}
+            </p>
+          )}
+        </header>
         {(summariesLoading ||
           job.aiSummary ||
           job.aiOfficeLocationToronto ||

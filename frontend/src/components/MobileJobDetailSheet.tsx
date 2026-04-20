@@ -133,21 +133,6 @@ export function MobileJobDetailSheet({
         overflow: 'hidden',
       }}
     >
-      <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 dark:border-slate-700">
-        <h2
-          id={headingId}
-          className="min-w-0 flex-1 text-base font-semibold leading-snug text-slate-900 dark:text-white"
-        >
-          {jobTitle(job)}
-        </h2>
-        <button
-          type="button"
-          onClick={onClose}
-          className="shrink-0 rounded-lg px-3 py-1.5 text-sm font-semibold text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950/50"
-        >
-          Done
-        </button>
-      </div>
       <div
         ref={bodyScrollRef}
         className="min-h-0 flex-1 touch-pan-y overscroll-y-contain px-4 py-4"
@@ -220,6 +205,21 @@ export function MobileJobDetailSheet({
         <p className="mt-4 whitespace-pre-wrap text-sm leading-relaxed text-slate-700 dark:text-slate-300">
           {jobDescription(job)}
         </p>
+      </div>
+      <div className="flex shrink-0 items-center justify-between gap-3 border-t border-slate-200 px-4 py-3 dark:border-slate-700">
+        <h2
+          id={headingId}
+          className="min-w-0 flex-1 truncate text-base font-semibold leading-snug text-slate-900 dark:text-white"
+        >
+          {jobTitle(job)}
+        </h2>
+        <button
+          type="button"
+          onClick={onClose}
+          className="shrink-0 rounded-lg px-3 py-1.5 text-sm font-semibold text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950/50"
+        >
+          Done
+        </button>
       </div>
       <ApplyOptionsModal
         open={applyOpen && hasApplyUrls}

@@ -244,8 +244,36 @@ export function JobsPage() {
                 to="/companies-map"
                 className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
               >
-                Companies map
+                Map
               </Link>
+              {jobs.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setFiltersOpen((v) => !v)}
+                  aria-expanded={filtersOpen}
+                  aria-controls="filters-panel"
+                  className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                    className="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M3 5h18M6 12h12M10 19h4" />
+                  </svg>
+                  <span>Filters</span>
+                  {activeFilterCount > 0 && (
+                    <span className="rounded-full bg-indigo-600 px-1.5 py-0.5 text-xs font-semibold text-white">
+                      {activeFilterCount}
+                    </span>
+                  )}
+                </button>
+              )}
               <a
                 href="https://github.com/SimonHumber/JobSearch"
                 target="_blank"
@@ -260,36 +288,6 @@ export function JobsPage() {
               </a>
             </div>
           </div>
-          {jobs.length > 0 && (
-            <div className="mt-3">
-              <button
-                type="button"
-                onClick={() => setFiltersOpen((v) => !v)}
-                aria-expanded={filtersOpen}
-                aria-controls="filters-panel"
-                className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-              >
-                <svg
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                  className="h-4 w-4"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M3 5h18M6 12h12M10 19h4" />
-                </svg>
-                <span>Filters</span>
-                {activeFilterCount > 0 && (
-                  <span className="rounded-full bg-indigo-600 px-1.5 py-0.5 text-xs font-semibold text-white">
-                    {activeFilterCount}
-                  </span>
-                )}
-              </button>
-            </div>
-          )}
         </div>
       </header>
 
