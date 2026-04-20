@@ -16,6 +16,62 @@ import { useMediaQuery } from '../hooks/useMediaQuery';
 import { jobKey } from '../lib/jobKey';
 import type { Job } from '../types/job';
 
+type SortMode = 'default' | 'salary' | 'newest' | 'oldest';
+
+function parseSalaryNumber(job: Job): number | null {
+  const candidates: (number | null | undefined)[] = [
+    job.jobMaxSalary,
+    job.jobMedianSalary,
+    job.jobMinSalary,
+  ];
+  for (const c of candidates) {
+    if (typeof c === 'number' && Number.isFinite(c) && c > 0) return c;
+  }
+  const text = (job.salaryDisplay ?? '').replace(/,/g, '');
+  if (!text) return null;
+  const matches = text.match(/\d+(?:\.\d+)?/g);
+  if (!matches || matches.length === 0) return null;
+  const nums = matches.map((m) => parseFloat(m)).filter((n) => Number.isFinite(n) && n > 0);
+  if (nums.length === 0) return null;
+  return Math.max(...nums);
+}
+
+function parsePostedAgoMs(postedDisplay: string | null | undefined): number | null {
+  if (!postedDisplay) return null;
+  const text = postedDisplay.trim().toLowerCase();
+  if (!text) return null;
+  if (text.includes('just') || text.includes('today') || text.includes('hour') || text.includes('minute')) {
+    return 0;
+  }
+  const m = text.match(/(\d+)\s+(day|week|month|year)s?/);
+  if (!m) return null;
+  const n = parseInt(m[1], 10);
+  const unit = m[2];
+  const dayMs = 24 * 60 * 60 * 1000;
+  switch (unit) {
+    case 'day':
+      return n * dayMs;
+    case 'week':
+      return n * 7 * dayMs;
+    case 'month':
+      return n * 30 * dayMs;
+    case 'year':
+      return n * 365 * dayMs;
+    default:
+      return null;
+  }
+}
+
+function jobPostedTimestamp(job: Job): number | null {
+  if (job.postedAt) {
+    const t = Date.parse(job.postedAt);
+    if (!Number.isNaN(t)) return t;
+  }
+  const ago = parsePostedAgoMs(job.postedDisplay);
+  if (ago !== null) return Date.now() - ago;
+  return null;
+}
+
 export function JobsPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
@@ -26,6 +82,12 @@ export function JobsPage() {
   const [generatedAt, setGeneratedAt] = useState<string | null>(null);
   const [queryLabel, setQueryLabel] = useState('software engineer');
   const [locationLabel, setLocationLabel] = useState('Toronto');
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [filterJustSalary, setFilterJustSalary] = useState(false);
+  const [filterCompaniesWithAddress, setFilterCompaniesWithAddress] = useState(false);
+  const [companySearch, setCompanySearch] = useState('');
+  const [descriptionSearch, setDescriptionSearch] = useState('');
+  const [sortMode, setSortMode] = useState<SortMode>('default');
   const isDesktop = useMediaQuery('(min-width: 1024px)');
   const jobListRef = useRef<HTMLUListElement>(null);
 
@@ -36,40 +98,95 @@ export function JobsPage() {
     }
   }, [listPage]);
 
-  const totalListPages = Math.max(1, Math.ceil(jobs.length / RESULTS_PER_PAGE));
+  const filteredJobs = useMemo(() => {
+    const companyQ = companySearch.trim().toLowerCase();
+    const descQ = descriptionSearch.trim().toLowerCase();
+    return jobs.filter((job) => {
+      if (filterJustSalary) {
+        const hasSalary =
+          (job.salaryDisplay && job.salaryDisplay.trim().length > 0) ||
+          parseSalaryNumber(job) !== null;
+        if (!hasSalary) return false;
+      }
+      if (filterCompaniesWithAddress) {
+        const addr = (job.aiOfficeLocationToronto ?? job.office_location_toronto ?? '').trim();
+        if (!addr) return false;
+      }
+      if (companyQ) {
+        const company = (job.company ?? '').toLowerCase();
+        if (!company.includes(companyQ)) return false;
+      }
+      if (descQ) {
+        const desc = (job.description ?? '').toLowerCase();
+        const summary = (job.aiSummary ?? '').toLowerCase();
+        if (!desc.includes(descQ) && !summary.includes(descQ)) return false;
+      }
+      return true;
+    });
+  }, [jobs, filterJustSalary, filterCompaniesWithAddress, companySearch, descriptionSearch]);
+
+  const sortedJobs = useMemo(() => {
+    if (sortMode === 'default') return filteredJobs;
+    const arr = [...filteredJobs];
+    if (sortMode === 'salary') {
+      arr.sort((a, b) => (parseSalaryNumber(b) ?? -1) - (parseSalaryNumber(a) ?? -1));
+    } else if (sortMode === 'newest') {
+      arr.sort((a, b) => (jobPostedTimestamp(b) ?? -Infinity) - (jobPostedTimestamp(a) ?? -Infinity));
+    } else if (sortMode === 'oldest') {
+      arr.sort((a, b) => (jobPostedTimestamp(a) ?? Infinity) - (jobPostedTimestamp(b) ?? Infinity));
+    }
+    return arr;
+  }, [filteredJobs, sortMode]);
+
+  const totalListPages = Math.max(1, Math.ceil(sortedJobs.length / RESULTS_PER_PAGE));
   const listOffset = (listPage - 1) * RESULTS_PER_PAGE;
   const visibleJobs = useMemo(
-    () => jobs.slice(listOffset, listOffset + RESULTS_PER_PAGE),
-    [jobs, listOffset]
+    () => sortedJobs.slice(listOffset, listOffset + RESULTS_PER_PAGE),
+    [sortedJobs, listOffset]
   );
 
   const selectedJob =
     selectedKey === null
       ? null
-      : jobs.find((job, index) => jobKey(job, index) === selectedKey) ?? null;
+      : sortedJobs.find((job, index) => jobKey(job, index) === selectedKey) ?? null;
+
+  const activeFilterCount =
+    (filterJustSalary ? 1 : 0) +
+    (filterCompaniesWithAddress ? 1 : 0) +
+    (companySearch.trim() ? 1 : 0) +
+    (descriptionSearch.trim() ? 1 : 0) +
+    (sortMode !== 'default' ? 1 : 0);
+
+  const clearFilters = useCallback(() => {
+    setFilterJustSalary(false);
+    setFilterCompaniesWithAddress(false);
+    setCompanySearch('');
+    setDescriptionSearch('');
+    setSortMode('default');
+  }, []);
 
   useEffect(() => {
-    if (jobs.length === 0) {
+    if (sortedJobs.length === 0) {
       setSelectedKey(null);
       setMobileDetailOpen(false);
       return;
     }
     setSelectedKey((prev) => {
-      if (prev !== null && jobs.some((job, index) => jobKey(job, index) === prev)) {
+      if (prev !== null && sortedJobs.some((job, index) => jobKey(job, index) === prev)) {
         return prev;
       }
-      return isDesktop ? jobKey(jobs[0], 0) : null;
+      return isDesktop ? jobKey(sortedJobs[0], 0) : null;
     });
     setMobileDetailOpen(false);
-  }, [jobs, isDesktop]);
+  }, [sortedJobs, isDesktop]);
 
   useEffect(() => {
-    if (!isDesktop || jobs.length === 0) return;
+    if (!isDesktop || sortedJobs.length === 0) return;
     setSelectedKey((prev) => {
       if (prev !== null) return prev;
-      return jobKey(jobs[0], 0);
+      return jobKey(sortedJobs[0], 0);
     });
-  }, [isDesktop, jobs]);
+  }, [isDesktop, sortedJobs]);
 
   const handleSelectJob = useCallback(
     (key: string) => {
@@ -82,12 +199,12 @@ export function JobsPage() {
   );
 
   useEffect(() => {
-    if (jobs.length === 0) {
+    if (sortedJobs.length === 0) {
       setListPage(1);
       return;
     }
-    setListPage((p) => Math.min(Math.max(1, p), Math.ceil(jobs.length / RESULTS_PER_PAGE)));
-  }, [jobs.length]);
+    setListPage((p) => Math.min(Math.max(1, p), Math.ceil(sortedJobs.length / RESULTS_PER_PAGE)));
+  }, [sortedJobs.length]);
 
   const runFixedSearch = useCallback(async () => {
     setError(null);
@@ -163,19 +280,130 @@ export function JobsPage() {
             {error}
           </div>
         )}
-        {!loading && !error && jobs.length === 0 && (
+        {jobs.length > 0 && (
+          <div className="mb-3 shrink-0 rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900/60">
+            <button
+              type="button"
+              onClick={() => setFiltersOpen((v) => !v)}
+              aria-expanded={filtersOpen}
+              aria-controls="filters-panel"
+              className="flex w-full items-center justify-between gap-2 px-4 py-2.5 text-left text-sm font-medium text-slate-800 transition hover:bg-slate-50 dark:text-slate-100 dark:hover:bg-slate-800/60"
+            >
+              <span className="flex items-center gap-2">
+                <svg
+                  viewBox="0 0 24 24"
+                  className={`h-4 w-4 transition-transform ${filtersOpen ? 'rotate-90' : ''}`}
+                  aria-hidden="true"
+                >
+                  <path
+                    fill="currentColor"
+                    d="M9 6l6 6-6 6"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                Filters &amp; sort
+                {activeFilterCount > 0 && (
+                  <span className="rounded-full bg-indigo-600 px-2 py-0.5 text-xs font-semibold text-white">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">
+                {sortedJobs.length} of {jobs.length} jobs
+              </span>
+            </button>
+            {filtersOpen && (
+              <div
+                id="filters-panel"
+                className="border-t border-slate-200 px-4 py-3 dark:border-slate-700"
+              >
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                      checked={filterJustSalary}
+                      onChange={(e) => setFilterJustSalary(e.target.checked)}
+                    />
+                    Only jobs with salary
+                  </label>
+                  <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                      checked={filterCompaniesWithAddress}
+                      onChange={(e) => setFilterCompaniesWithAddress(e.target.checked)}
+                    />
+                    Only companies with address
+                  </label>
+                  <label className="flex flex-col gap-1 text-sm text-slate-700 dark:text-slate-200">
+                    <span>Search company</span>
+                    <input
+                      type="text"
+                      value={companySearch}
+                      onChange={(e) => setCompanySearch(e.target.value)}
+                      placeholder="e.g. shopify"
+                      className="rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                    />
+                  </label>
+                  <label className="flex flex-col gap-1 text-sm text-slate-700 dark:text-slate-200">
+                    <span>Search description</span>
+                    <input
+                      type="text"
+                      value={descriptionSearch}
+                      onChange={(e) => setDescriptionSearch(e.target.value)}
+                      placeholder="e.g. typescript"
+                      className="rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                    />
+                  </label>
+                  <label className="flex flex-col gap-1 text-sm text-slate-700 dark:text-slate-200 sm:col-span-2">
+                    <span>Sort by</span>
+                    <select
+                      value={sortMode}
+                      onChange={(e) => setSortMode(e.target.value as SortMode)}
+                      className="rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                    >
+                      <option value="default">Default</option>
+                      <option value="salary">Salary (highest first)</option>
+                      <option value="newest">Newest first</option>
+                      <option value="oldest">Oldest first</option>
+                    </select>
+                  </label>
+                </div>
+                {activeFilterCount > 0 && (
+                  <div className="mt-3 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={clearFilters}
+                      className="text-xs font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+                    >
+                      Clear all
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {!loading && !error && sortedJobs.length === 0 && (
           <div className="flex flex-1 items-center justify-center px-4 py-8">
             <p className="text-center text-slate-500 dark:text-slate-400">
-              No jobs found from the backend feed.
+              {jobs.length === 0
+                ? 'No jobs found from the backend feed.'
+                : 'No jobs match the current filters.'}
             </p>
           </div>
         )}
 
-        {jobs.length > 0 && (
+        {sortedJobs.length > 0 && (
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-slate-200 bg-slate-100/80 shadow-sm dark:border-slate-700 dark:bg-slate-900/50">
             <p className="shrink-0 border-b border-slate-200 bg-slate-50/90 px-4 py-2 text-center text-xs text-slate-500 dark:border-slate-700 dark:bg-slate-950/30 dark:text-slate-400">
-              Showing {listOffset + 1}–{Math.min(listOffset + visibleJobs.length, jobs.length)} of{' '}
-              {jobs.length} jobs from search
+              Showing {listOffset + 1}–{Math.min(listOffset + visibleJobs.length, sortedJobs.length)} of{' '}
+              {sortedJobs.length} jobs from search
             </p>
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row lg:items-stretch">
               <div
