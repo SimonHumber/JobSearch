@@ -17,12 +17,28 @@ from app.db import (
 from app.groq_summarize import summarize_job_descriptions
 from app.schemas import JobDescriptionIn, JobOut
 
-DEFAULT_QUERY_JOB_TITLE = "software engineer or software developer"
+DEFAULT_QUERY_JOB_TITLE = (
+    '"software engineer" OR "software developer" '
+    'OR "application engineer" OR "application developer" '
+    'OR "systems engineer" OR "systems developer" '
+    'OR "frontend engineer" OR "frontend developer" '
+    'OR "backend engineer" OR "backend developer" '
+    'OR "full stack engineer" OR "full stack developer" '
+    'OR "mobile engineer" OR "mobile developer" '
+    'OR "ios engineer" OR "ios developer" '
+    'OR "android engineer" OR "android developer" '
+    'OR "devops" '
+    'OR "site reliability engineer" '
+    'OR "data engineer" '
+    'OR "machine learning engineer" OR "ml engineer" '
+    'OR "mlops" '
+    '-intern -internship -coop -"co-op" -student'
+)
 DEFAULT_QUERY_LOCATION = "Toronto"
 DEFAULT_QUERY_PAGE = 1
 DEFAULT_QUERY_NUM_PAGES = 30
 DEFAULT_SEARCH_RADIUS_KM = 25
-DEFAULT_DATE_POSTED = "any"
+DEFAULT_DATE_POSTED = "week"  # any, 3days, week, month
 
 _DATE_POSTED_CHIPS: dict[str, str] = {
     "today": "date_posted:today",
@@ -395,7 +411,7 @@ def main() -> None:
         "--date-posted",
         choices=sorted(_DATE_POSTED_CHIPS.keys()),
         default=DEFAULT_DATE_POSTED,
-        help="Filter by posting date (default: 3days).",
+        help="Filter by posting date.",
     )
     args = parser.parse_args()
 
