@@ -18,25 +18,12 @@ from app.groq_summarize import summarize_job_descriptions
 from app.schemas import JobDescriptionIn, JobOut
 
 DEFAULT_QUERY_JOB_TITLE = (
-    '"software engineer" OR "software developer" '
-    'OR "application engineer" OR "application developer" '
-    'OR "systems engineer" OR "systems developer" '
-    'OR "frontend engineer" OR "frontend developer" '
-    'OR "backend engineer" OR "backend developer" '
-    'OR "full stack engineer" OR "full stack developer" '
-    'OR "mobile engineer" OR "mobile developer" '
-    'OR "ios engineer" OR "ios developer" '
-    'OR "android engineer" OR "android developer" '
-    'OR "devops" '
-    'OR "site reliability engineer" '
-    'OR "data engineer" '
-    'OR "machine learning engineer" OR "ml engineer" '
-    'OR "mlops" '
-    '-intern -internship -coop -"co-op" -student'
+    '(software OR frontend OR backend OR "full stack" OR mobile OR devops OR data OR "machine learning" OR ml OR "site reliability") '
+    "(developer OR engineer)"
 )
 DEFAULT_QUERY_LOCATION = "Toronto"
 DEFAULT_QUERY_PAGE = 1
-DEFAULT_QUERY_NUM_PAGES = 30
+DEFAULT_QUERY_NUM_PAGES = 1
 DEFAULT_SEARCH_RADIUS_KM = 25
 DEFAULT_DATE_POSTED = "week"  # any, 3days, week, month
 
@@ -51,10 +38,9 @@ _DATE_POSTED_CHIPS: dict[str, str] = {
 
 def _build_query(job_title: str, location: str) -> str:
     title = job_title.strip()
-    loc = location.strip()
-    if title and loc:
-        return f"{title} in {loc}"
-    return title or loc
+    if title:
+        return title
+    return location.strip()
 
 
 def _split_location(location: str) -> tuple[str | None, str | None, str | None]:
