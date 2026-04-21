@@ -240,12 +240,6 @@ export function JobsPage() {
               Job search
             </h1>
             <div className="flex items-center gap-2">
-              <Link
-                to="/companies-map"
-                className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-              >
-                Map
-              </Link>
               {jobs.length > 0 && (
                 <button
                   type="button"
@@ -274,6 +268,12 @@ export function JobsPage() {
                   )}
                 </button>
               )}
+              <Link
+                to="/companies-map"
+                className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+              >
+                Map
+              </Link>
               <a
                 href="https://github.com/SimonHumber/JobSearch"
                 target="_blank"
