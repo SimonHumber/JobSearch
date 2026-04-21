@@ -141,23 +141,16 @@ export function MobileJobDetailSheet({
           WebkitOverflowScrolling: 'touch',
         }}
       >
-        <div className="flex flex-col gap-3 border-b border-slate-200 pb-4 dark:border-slate-700">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <p className="text-base font-medium text-slate-800 dark:text-slate-200">
-              {displayEmployer(job)}
-            </p>
-            <button
-              type="button"
-              disabled={!hasApplyUrls}
-              onClick={() => setApplyOpen(true)}
-              title={
-                hasApplyUrls ? 'View where to apply' : 'No apply links available for this listing'
-              }
-              className="shrink-0 self-start rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 disabled:shadow-none dark:disabled:bg-slate-600 dark:disabled:text-slate-400"
-            >
-              Apply
-            </button>
-          </div>
+        <div className="flex flex-col gap-2 border-b border-slate-200 pb-4 dark:border-slate-700">
+          <h2
+            id={headingId}
+            className="text-xl font-semibold leading-tight text-slate-900 dark:text-white"
+          >
+            {jobTitle(job)}
+          </h2>
+          <p className="text-base font-medium text-slate-800 dark:text-slate-200">
+            {displayEmployer(job)}
+          </p>
           <p className="text-sm text-slate-600 dark:text-slate-400">
             {formatJobLocation(job)}
             {posted ? ` · Posted ${posted}` : ''}
@@ -175,6 +168,17 @@ export function MobileJobDetailSheet({
           {source && (
             <p className="text-xs text-slate-500 dark:text-slate-400">Listing source: {source}</p>
           )}
+          <button
+            type="button"
+            disabled={!hasApplyUrls}
+            onClick={() => setApplyOpen(true)}
+            title={
+              hasApplyUrls ? 'View where to apply' : 'No apply links available for this listing'
+            }
+            className="mt-2 w-full rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 disabled:shadow-none dark:disabled:bg-slate-600 dark:disabled:text-slate-400"
+          >
+            Apply
+          </button>
         </div>
         {(summariesLoading || job.aiSummary || job.aiOfficeLocationToronto || job.aiSummaryError) && (
           <section
@@ -206,17 +210,11 @@ export function MobileJobDetailSheet({
           {jobDescription(job)}
         </p>
       </div>
-      <div className="flex shrink-0 items-center justify-between gap-3 border-t border-slate-200 px-4 py-3 dark:border-slate-700">
-        <h2
-          id={headingId}
-          className="min-w-0 flex-1 truncate text-base font-semibold leading-snug text-slate-900 dark:text-white"
-        >
-          {jobTitle(job)}
-        </h2>
+      <div className="shrink-0 border-t border-slate-200 px-4 py-3 dark:border-slate-700">
         <button
           type="button"
           onClick={onClose}
-          className="shrink-0 rounded-lg px-3 py-1.5 text-sm font-semibold text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950/50"
+          className="w-full rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500"
         >
           Done
         </button>
