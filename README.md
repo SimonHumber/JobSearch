@@ -4,17 +4,28 @@ The "backend" folder is really just some scripts that run automatically with Git
 Run dev.py for job search and llm summary, backfill_company_location.py to use llm to find address of each company.
 
 0. Setup db with supabase_setup.sql, need companies table and job_postings table.
-1. Use serpapi to search jobs (apply whatever filters)
+1. Use serpapi to search jobs (apply whatever filters), if a page is empty continue searching down the list (max 30 pages)
 2. Use llm (I'm using gemma 4 31b) to summarize description, extract salary and address from description/db if there
 3. Use llm again to go through companies table, whichever doesn't have address, use websearch tools to get address
 4. Populate database with job postings, old data in job_postings table is replaced.
 5. Frontend hits Supabase endpoint to read data. Maps geocoded addresses.
 
 Current search settings:
-DEFAULT_QUERY_JOB_TITLE = (
-    '(software OR frontend OR backend OR "full stack" OR mobile OR devops OR data OR "machine learning" OR ml OR "site reliability") '
-    "(developer OR engineer)"
-)
+DEFAULT_QUERY_JOB_TITLES: list[str] = [
+    "software engineer",
+    "software developer",
+    "frontend developer",
+    "backend developer",
+    "full stack developer",
+    "mobile developer",
+    "ios developer",
+    "android developer",
+    "devops",
+    "site reliability engineer",
+    "data engineer",
+    "mlops",
+    "machine learning engineer",
+]
 DEFAULT_QUERY_LOCATION = "Toronto"
 DEFAULT_QUERY_PAGE = 1
 DEFAULT_QUERY_NUM_PAGES = 30

@@ -17,13 +17,24 @@ from app.db import (
 from app.groq_summarize import summarize_job_descriptions
 from app.schemas import JobDescriptionIn, JobOut
 
-DEFAULT_QUERY_JOB_TITLE = (
-    '(software OR frontend OR backend OR "full stack" OR mobile OR devops OR data OR "machine learning" OR ml OR "site reliability") '
-    "(developer OR engineer)"
-)
+DEFAULT_QUERY_JOB_TITLES: list[str] = [
+    "software engineer",
+    "software developer",
+    "frontend developer",
+    "backend developer",
+    "full stack developer",
+    "mobile developer",
+    "ios developer",
+    "android developer",
+    "devops",
+    "site reliability engineer",
+    "data engineer",
+    "mlops",
+    "machine learning engineer",
+]
+
 DEFAULT_QUERY_LOCATION = "Toronto"
-DEFAULT_QUERY_PAGE = 1
-DEFAULT_QUERY_NUM_PAGES = 1
+DEFAULT_TOTAL_PAGE_BUDGET = 25
 DEFAULT_SEARCH_RADIUS_KM = 25
 DEFAULT_DATE_POSTED = "week"  # any, 3days, week, month
 
@@ -135,9 +146,7 @@ def _extract_serp_apply_options(item: dict[str, Any]) -> list[dict[str, str]]:
     return out
 
 
-def _serp_item_to_job_dict(
-    item: dict[str, Any], query: str, index: int
-) -> dict[str, Any]:
+def _serp_item_to_job_dict(item: dict[str, Any]) -> dict[str, Any]:
     title = str(item.get("title") or "").strip() or "Untitled role"
     company = str(item.get("company_name") or item.get("company") or "").strip()
     location = str(item.get("location") or "").strip() or "Location not listed"
@@ -151,7 +160,9 @@ def _serp_item_to_job_dict(
     if raw_id:
         job_id = raw_id
     else:
-        stable = f"{title}|{company}|{location}|{query}|{index}"
+        # Hash only stable posting fields so the same listing surfaced by
+        # different queries still collapses to one id.
+        stable = f"{title}|{company}|{location}|{description}"
         job_id = "serp-" + hashlib.sha1(stable.encode("utf-8")).hexdigest()[:16]
 
     return {
@@ -181,93 +192,131 @@ def _serp_item_to_job_dict(
 
 async def _fetch_jobs(
     *,
-    job_title: str,
+    job_titles: list[str],
     location: str,
-    page: int,
-    num_pages: int,
+    total_page_budget: int,
     date_posted: str,
 ) -> list[dict[str, Any]]:
+    titles = [t.strip() for t in job_titles if t and t.strip()]
+    if not titles:
+        return []
+
     chip_value = _DATE_POSTED_CHIPS.get(
         date_posted, _DATE_POSTED_CHIPS[DEFAULT_DATE_POSTED]
     )
     print(
-        f"[fetch] Querying SerpApi Google Jobs for '{job_title}' in '{location}' "
-        f"(page={page}, num_pages={num_pages}, date_posted={date_posted})"
+        f"[fetch] Querying SerpApi Google Jobs in '{location}' across "
+        f"{len(titles)} query/queries "
+        f"(total_page_budget={total_page_budget}, date_posted={date_posted})"
     )
     settings = get_settings()
     key = settings.serpapi_key.strip()
     if not key:
         raise RuntimeError("SERPAPI_KEY is required.")
 
-    query = _build_query(job_title, location)
-    if not query:
-        return []
-
     url = settings.serpapi_base.rstrip("/")
     jobs: list[dict[str, Any]] = []
     seen_ids: set[str] = set()
-    normalized_index = 0
-    next_page_token: str | None = None
+    pages_used = 0
 
     async with httpx.AsyncClient(timeout=120.0) as client:
-        for offset in range(num_pages):
-            request_label = f"page={page + offset}"
-            params: dict[str, Any] = {
-                "engine": "google_jobs",
-                "q": query,
-                "api_key": key,
-                "hl": "en",
-                "location": location,
-                "lrad": DEFAULT_SEARCH_RADIUS_KM,
-            }
-            if chip_value:
-                params["chips"] = chip_value
-            if next_page_token:
-                params["next_page_token"] = next_page_token
-            response = await client.get(url, params=params)
-            if response.status_code != 200:
-                raise RuntimeError(
-                    f"SerpApi error ({response.status_code}) at {request_label}: "
-                    f"{response.text[:500]}"
+        for query_idx, title in enumerate(titles, start=1):
+            if pages_used >= total_page_budget:
+                print(
+                    f"[fetch] Page budget ({total_page_budget}) exhausted; "
+                    f"stopping before query {query_idx}/{len(titles)}."
                 )
-
-            payload = response.json()
-            page_jobs = (
-                payload.get("jobs_results") if isinstance(payload, dict) else None
-            )
-            if not isinstance(page_jobs, list):
-                page_jobs = []
-
-            print(f"[fetch] {request_label} returned {len(page_jobs)} jobs")
-            if not page_jobs:
                 break
 
-            for item in page_jobs:
-                if not isinstance(item, dict):
-                    continue
-                job = _serp_item_to_job_dict(item, query, normalized_index)
-                job_id = str(job.get("id") or "").strip()
-                if job_id and job_id in seen_ids:
-                    continue
-                if job_id:
-                    seen_ids.add(job_id)
-                jobs.append(JobOut.model_validate(job).model_dump())
-                normalized_index += 1
+            query = _build_query(title, location)
+            if not query:
+                continue
 
-            pagination = (
-                payload.get("serpapi_pagination") if isinstance(payload, dict) else None
+            remaining = total_page_budget - pages_used
+            print(
+                f"[fetch] Query {query_idx}/{len(titles)}: {query!r} "
+                f"(pages remaining in budget: {remaining})"
             )
-            token_value = (
-                pagination.get("next_page_token")
-                if isinstance(pagination, dict)
-                else None
-            )
-            next_page_token = str(token_value).strip() if token_value else None
-            if not next_page_token:
-                print("[fetch] No next_page_token; stopping pagination")
-                break
 
-    print(f"[fetch] Retrieved {len(jobs)} jobs")
+            next_page_token: str | None = None
+            query_pages = 0
+            for page_offset in range(remaining):
+                pages_used += 1
+                query_pages += 1
+                request_label = f"query={query_idx} page={page_offset + 1}"
+                params: dict[str, Any] = {
+                    "engine": "google_jobs",
+                    "q": query,
+                    "api_key": key,
+                    "hl": "en",
+                    "location": location,
+                    "lrad": DEFAULT_SEARCH_RADIUS_KM,
+                }
+                if chip_value:
+                    params["chips"] = chip_value
+                if next_page_token:
+                    params["next_page_token"] = next_page_token
+
+                response = await client.get(url, params=params)
+                if response.status_code != 200:
+                    raise RuntimeError(
+                        f"SerpApi error ({response.status_code}) at {request_label}: "
+                        f"{response.text[:500]}"
+                    )
+
+                payload = response.json()
+                page_jobs = (
+                    payload.get("jobs_results") if isinstance(payload, dict) else None
+                )
+                if not isinstance(page_jobs, list):
+                    page_jobs = []
+
+                print(f"[fetch] {request_label} returned {len(page_jobs)} jobs")
+                if not page_jobs:
+                    print(
+                        f"[fetch] Empty page for query {query_idx}; "
+                        "moving to next query."
+                    )
+                    break
+
+                for item in page_jobs:
+                    if not isinstance(item, dict):
+                        continue
+                    job = _serp_item_to_job_dict(item)
+                    job_id = str(job.get("id") or "").strip()
+                    if job_id and job_id in seen_ids:
+                        continue
+                    if job_id:
+                        seen_ids.add(job_id)
+                    jobs.append(JobOut.model_validate(job).model_dump())
+
+                pagination = (
+                    payload.get("serpapi_pagination")
+                    if isinstance(payload, dict)
+                    else None
+                )
+                token_value = (
+                    pagination.get("next_page_token")
+                    if isinstance(pagination, dict)
+                    else None
+                )
+                next_page_token = str(token_value).strip() if token_value else None
+                if not next_page_token:
+                    print(
+                        f"[fetch] No next_page_token for query {query_idx}; "
+                        "moving to next query."
+                    )
+                    break
+
+            print(
+                f"[fetch] Query {query_idx} consumed {query_pages} page(s); "
+                f"total used: {pages_used}/{total_page_budget}"
+            )
+
+    print(
+        f"[fetch] Retrieved {len(jobs)} unique jobs across "
+        f"{pages_used} page(s)"
+    )
     return jobs
 
 
@@ -311,18 +360,16 @@ def _merge_summaries(
 
 async def generate_jobs_json(
     *,
-    job_title: str,
+    job_titles: list[str],
     location: str,
-    page: int,
-    num_pages: int,
+    total_page_budget: int,
     date_posted: str,
 ) -> None:
     print("[run] Starting jobs feed generation")
     jobs = await _fetch_jobs(
-        job_title=job_title,
+        job_titles=job_titles,
         location=location,
-        page=page,
-        num_pages=num_pages,
+        total_page_budget=total_page_budget,
         date_posted=date_posted,
     )
 
@@ -389,10 +436,23 @@ async def generate_jobs_json(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Fetch jobs and ingest into database.")
-    parser.add_argument("--job-title", default=DEFAULT_QUERY_JOB_TITLE)
+    parser.add_argument(
+        "--job-title",
+        nargs="+",
+        default=DEFAULT_QUERY_JOB_TITLES,
+        help=(
+            "One or more job title queries, tried in order. When a query "
+            "returns an empty page, the next query consumes the remaining "
+            "page budget."
+        ),
+    )
     parser.add_argument("--location", default=DEFAULT_QUERY_LOCATION)
-    parser.add_argument("--page", type=int, default=DEFAULT_QUERY_PAGE)
-    parser.add_argument("--num-pages", type=int, default=DEFAULT_QUERY_NUM_PAGES)
+    parser.add_argument(
+        "--total-page-budget",
+        type=int,
+        default=DEFAULT_TOTAL_PAGE_BUDGET,
+        help="Total SerpApi page calls shared across all queries.",
+    )
     parser.add_argument(
         "--date-posted",
         choices=sorted(_DATE_POSTED_CHIPS.keys()),
@@ -401,12 +461,17 @@ def main() -> None:
     )
     args = parser.parse_args()
 
+    job_titles = (
+        list(args.job_title)
+        if isinstance(args.job_title, list)
+        else [args.job_title]
+    )
+
     asyncio.run(
         generate_jobs_json(
-            job_title=args.job_title,
+            job_titles=job_titles,
             location=args.location,
-            page=max(1, args.page),
-            num_pages=max(1, min(50, args.num_pages)),
+            total_page_budget=max(1, min(100, args.total_page_budget)),
             date_posted=args.date_posted,
         )
     )
