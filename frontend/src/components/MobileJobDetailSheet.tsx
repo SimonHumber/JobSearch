@@ -214,7 +214,7 @@ export function MobileJobDetailSheet({
         <button
           type="button"
           onClick={onClose}
-          className="w-full rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500"
+          className="w-full rounded-lg border border-indigo-600 bg-transparent px-5 py-2.5 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-50 dark:border-indigo-400 dark:text-indigo-400 dark:hover:bg-indigo-950/50"
         >
           Done
         </button>
