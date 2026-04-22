@@ -20,9 +20,9 @@ from app.schemas import JobDescriptionIn, JobOut
 DEFAULT_QUERY_JOB_TITLES: list[str] = [
     "software engineer",
     "software developer",
-    "frontend developer",
-    "backend developer",
     "full stack developer",
+    "backend developer",
+    "frontend developer",
     "mobile developer",
     "ios developer",
     "android developer",
