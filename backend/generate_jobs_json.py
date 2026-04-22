@@ -34,7 +34,7 @@ DEFAULT_QUERY_JOB_TITLES: list[str] = [
 ]
 
 DEFAULT_QUERY_LOCATION = "Toronto"
-DEFAULT_TOTAL_PAGE_BUDGET = 25
+DEFAULT_TOTAL_PAGE_BUDGET = 30
 DEFAULT_SEARCH_RADIUS_KM = 25
 DEFAULT_DATE_POSTED = "week"  # any, 3days, week, month
 
@@ -313,10 +313,7 @@ async def _fetch_jobs(
                 f"total used: {pages_used}/{total_page_budget}"
             )
 
-    print(
-        f"[fetch] Retrieved {len(jobs)} unique jobs across "
-        f"{pages_used} page(s)"
-    )
+    print(f"[fetch] Retrieved {len(jobs)} unique jobs across " f"{pages_used} page(s)")
     return jobs
 
 
@@ -462,9 +459,7 @@ def main() -> None:
     args = parser.parse_args()
 
     job_titles = (
-        list(args.job_title)
-        if isinstance(args.job_title, list)
-        else [args.job_title]
+        list(args.job_title) if isinstance(args.job_title, list) else [args.job_title]
     )
 
     asyncio.run(

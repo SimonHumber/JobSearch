@@ -12,8 +12,13 @@ import httpx
 from app.schemas import JobDescriptionIn, JobSummaryOut
 
 _MAX_DESC_CHARS = 24_000
-_LLM_CALL_INTERVAL_SECONDS = 0
+_LLM_CALL_INTERVAL_SECONDS = 10
 _GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta"
+
+# Retry config for transient Gemini failures (5xx, 429, network errors).
+_RETRY_STATUS_CODES: frozenset[int] = frozenset({429, 500, 502, 503, 504})
+_RETRY_MAX_ATTEMPTS = 4  # total tries including the initial one
+_RETRY_BACKOFF_BASE_SECONDS = 1.0  # 1s, 2s, 4s, ...
 
 _SYSTEM_SUMMARY_WITH_SEARCH = (
     "Return a valid JSON object with exactly three keys: "
@@ -134,60 +139,83 @@ def _summarize_one(
         if company_text
         else truncated
     )
-    try:
-        response = client.post(
-            f"{_GEMINI_BASE_URL}/models/{model}:generateContent",
-            headers={"x-goog-api-key": api_key, "Content-Type": "application/json"},
-            json={
-                "system_instruction": {
-                    "parts": [{"text": _SYSTEM_SUMMARY_WITH_SEARCH}]
-                },
-                "contents": [{"role": "user", "parts": [{"text": user_msg}]}],
-                "generationConfig": {
-                    "temperature": 0.2,
-                    "maxOutputTokens": 900,
-                },
-            },
-        )
-        response.raise_for_status()
-        payload = response.json()
-        p1_prompt, p1_completion, p1_total = _extract_usage_counts(payload)
-        print(
-            f"[llm][{job_id}] prompt1 tokens "
-            f"prompt={p1_prompt} completion={p1_completion} total={p1_total}"
-        )
-        content = _extract_candidate_text(payload)
-        description, salary, office_location_toronto = _parse_llm_json(content)
 
-        return JobSummaryOut(
-            id=job_id,
-            description=description,
-            salary=salary,
-            office_location_toronto=office_location_toronto,
-            error=None,
-        )
-    except httpx.HTTPStatusError as e:
-        body = ""
+    request_json = {
+        "system_instruction": {"parts": [{"text": _SYSTEM_SUMMARY_WITH_SEARCH}]},
+        "contents": [{"role": "user", "parts": [{"text": user_msg}]}],
+        "generationConfig": {
+            "temperature": 0.2,
+            "maxOutputTokens": 900,
+        },
+    }
+
+    last_error: str = ""
+    for attempt in range(1, _RETRY_MAX_ATTEMPTS + 1):
         try:
-            body = e.response.text
-        except Exception:
+            response = client.post(
+                f"{_GEMINI_BASE_URL}/models/{model}:generateContent",
+                headers={
+                    "x-goog-api-key": api_key,
+                    "Content-Type": "application/json",
+                },
+                json=request_json,
+            )
+            response.raise_for_status()
+            payload = response.json()
+            p1_prompt, p1_completion, p1_total = _extract_usage_counts(payload)
+            print(
+                f"[llm][{job_id}] prompt1 tokens "
+                f"prompt={p1_prompt} completion={p1_completion} total={p1_total}"
+            )
+            content = _extract_candidate_text(payload)
+            description, salary, office_location_toronto = _parse_llm_json(content)
+
+            return JobSummaryOut(
+                id=job_id,
+                description=description,
+                salary=salary,
+                office_location_toronto=office_location_toronto,
+                error=None,
+            )
+        except httpx.HTTPStatusError as e:
+            status = e.response.status_code
             body = ""
-        err = f"HTTP {e.response.status_code}: {body[:350]}".strip()
-        return JobSummaryOut(
-            id=job_id,
-            description="",
-            salary=None,
-            office_location_toronto=None,
-            error=err[:500],
+            try:
+                body = e.response.text
+            except Exception:
+                body = ""
+            last_error = f"HTTP {status}: {body[:350]}".strip()
+            retriable = status in _RETRY_STATUS_CODES
+        except (httpx.RequestError, httpx.TimeoutException) as e:
+            last_error = f"{type(e).__name__}: {e}"[:500]
+            retriable = True
+        except Exception as e:
+            # JSON parse error or similar; not worth retrying.
+            return JobSummaryOut(
+                id=job_id,
+                description="",
+                salary=None,
+                office_location_toronto=None,
+                error=str(e)[:500],
+            )
+
+        if not retriable or attempt >= _RETRY_MAX_ATTEMPTS:
+            break
+
+        backoff = _RETRY_BACKOFF_BASE_SECONDS * (2 ** (attempt - 1))
+        print(
+            f"[llm][{job_id}] attempt {attempt}/{_RETRY_MAX_ATTEMPTS} failed "
+            f"({last_error[:120]}); retrying in {backoff:.1f}s"
         )
-    except Exception as e:
-        return JobSummaryOut(
-            id=job_id,
-            description="",
-            salary=None,
-            office_location_toronto=None,
-            error=str(e)[:500],
-        )
+        time.sleep(backoff)
+
+    return JobSummaryOut(
+        id=job_id,
+        description="",
+        salary=None,
+        office_location_toronto=None,
+        error=last_error[:500] or "Unknown error",
+    )
 
 
 async def summarize_job_descriptions(
