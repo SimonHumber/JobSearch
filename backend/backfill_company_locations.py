@@ -305,7 +305,11 @@ def main() -> None:
     else:
         print("[run] Starting from beginning (no checkpoint resume)")
 
-    with psycopg.connect(db_url) as conn:
+    # prepare_threshold=None disables psycopg3's server-side prepared
+    # statements, which are incompatible with Supabase's PgBouncer in
+    # transaction pooling mode (causes "prepared statement _pg3_0 already
+    # exists").
+    with psycopg.connect(db_url, prepare_threshold=None) as conn:
         with conn.cursor() as cur:
             cur.execute(
                 """
@@ -412,6 +416,16 @@ def main() -> None:
                         failures += 1
                         print(f"[error] Row processing failed: {exc}")
                         text = str(exc).lower()
+                        # Rollback so the next row isn't poisoned by the
+                        # aborted transaction ("current transaction is
+                        # aborted, commands ignored until end of transaction
+                        # block"). Swallow rollback failures since they only
+                        # matter if the connection is fully dead, which the
+                        # check below handles.
+                        try:
+                            conn.rollback()
+                        except Exception as rb_exc:
+                            print(f"[error] Rollback failed: {rb_exc}")
                         if (
                             "connection is lost" in text
                             or "server closed the connection" in text
