@@ -32,7 +32,7 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
           MAP_API_KEY: ${{ secrets.MAP_API_KEY }}
-          GEMINI_MODEL: gemini-2.0-flash
+          GEMINI_MODEL: gemma-4-31b-it
         run: python dev.py
 
       - name: Backfill missing company locations
@@ -40,5 +40,5 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
           MAP_API_KEY: ${{ secrets.MAP_API_KEY }}
-          GEMINI_MODEL: gemini-2.0-flash
+          GEMINI_MODEL: gemma-4-31b-it
         run: python backfill_company_locations.py --no-resume 

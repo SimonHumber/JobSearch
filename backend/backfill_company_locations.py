@@ -163,7 +163,6 @@ def _find_address_with_gemma(
                             ],
                         }
                     ],
-                    "tools": [{"google_search": {}}],
                     "generationConfig": {"temperature": 0.1, "maxOutputTokens": 220},
                 },
             )
@@ -292,7 +291,7 @@ def main() -> None:
     if not map_api_key:
         raise RuntimeError("MAP_API_KEY is required in backend/.env.")
 
-    model = settings.gemini_model.strip() or "gemini-2.0-flash"
+    model = settings.gemini_model.strip() or "gemma-4-31b-it"
     print(f"[run] Using model: {model}")
 
     if args.start_after_id is not None:
