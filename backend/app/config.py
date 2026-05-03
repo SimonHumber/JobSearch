@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     )
 
     google_api_key: str = ""
-    gemini_model: str = "gemma-4-31b-it"
+    gemini_model: str = "gemini-2.0-flash"
     database_url: str = "postgresql://postgres:postgres@localhost:5432/jobsearch"
     supabase_url: str = ""
     supabase_secret: str = ""

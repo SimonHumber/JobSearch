@@ -5,7 +5,6 @@ import json
 import re
 import time
 from pathlib import Path
-from typing import Any
 
 import httpx
 import psycopg
@@ -21,7 +20,6 @@ _SYSTEM_PROMPT = (
 )
 _RETRY_ATTEMPTS = 3
 _RETRY_BASE_SLEEP_SECONDS = 2.0
-_BATCH_COMMIT_EVERY = 5
 _CHECKPOINT_PATH = (
     Path(__file__).resolve().with_name(".backfill_company_locations_checkpoint.json")
 )
@@ -143,7 +141,7 @@ def _find_address_with_gemma(
     model: str,
     company_name: str,
 ) -> str | None:
-    last_error: Exception | None = None
+    last_detail = ""
     for attempt in range(1, _RETRY_ATTEMPTS + 1):
         try:
             response = client.post(
@@ -170,8 +168,10 @@ def _find_address_with_gemma(
                 },
             )
             if response.status_code != 200:
+                body = (response.text or "")[:300].strip()
+                last_detail = f"HTTP {response.status_code}: {body}"
                 print(
-                    f"[gemma] {company_name}: HTTP {response.status_code} "
+                    f"[llm] {company_name}: {last_detail[:140]} "
                     f"(attempt {attempt}/{_RETRY_ATTEMPTS})"
                 )
                 if attempt < _RETRY_ATTEMPTS:
@@ -181,15 +181,17 @@ def _find_address_with_gemma(
             content = _extract_candidate_text(payload)
             return _parse_address_json(content)
         except (httpx.TimeoutException, httpx.RequestError) as exc:
-            last_error = exc
+            last_detail = f"{type(exc).__name__}: {exc}"
             print(
-                f"[gemma] {company_name}: request failed "
+                f"[llm] {company_name}: request failed "
                 f"(attempt {attempt}/{_RETRY_ATTEMPTS}): {exc}"
             )
             if attempt < _RETRY_ATTEMPTS:
                 time.sleep(_RETRY_BASE_SLEEP_SECONDS * attempt)
-    if last_error:
-        print(f"[gemma] {company_name}: giving up after retries")
+    if last_detail:
+        print(
+            f"[llm] {company_name}: giving up after retries ({last_detail[:200]})"
+        )
     return None
 
 
@@ -290,7 +292,7 @@ def main() -> None:
     if not map_api_key:
         raise RuntimeError("MAP_API_KEY is required in backend/.env.")
 
-    model = settings.gemini_model.strip() or "gemma-4-31b-it"
+    model = settings.gemini_model.strip() or "gemini-2.0-flash"
     print(f"[run] Using model: {model}")
 
     if args.start_after_id is not None:
@@ -316,6 +318,7 @@ def main() -> None:
                 SELECT id, name, address, lat, long
                 FROM companies
                 WHERE id > %s
+                  AND (address IS NULL OR btrim(address) = '')
                 ORDER BY id ASC
                 LIMIT %s;
                 """,
@@ -402,16 +405,9 @@ def main() -> None:
                                 """,
                                 (address, lat, lng, company_id),
                             )
-                        updated += 1
-                        if (
-                            not args.dry_run
-                            and updated > 0
-                            and updated % _BATCH_COMMIT_EVERY == 0
-                        ):
                             conn.commit()
-                            print(f"[run] Intermediate commit at {updated} updates")
-                        if not args.dry_run:
                             _save_checkpoint(company_id)
+                        updated += 1
                     except Exception as exc:
                         failures += 1
                         print(f"[error] Row processing failed: {exc}")
@@ -436,9 +432,6 @@ def main() -> None:
                             )
                             break
                         continue
-                else:
-                    # Completed all rows without early break.
-                    pass
             finally:
                 gemma_client.close()
                 geo_client.close()

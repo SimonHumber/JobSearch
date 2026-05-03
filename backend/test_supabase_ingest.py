@@ -66,7 +66,7 @@ def main() -> None:
     print("[test] Replacing job_postings with test payload")
     replace_job_postings(db_url, jobs)
 
-    with psycopg.connect(db_url) as conn:
+    with psycopg.connect(db_url, prepare_threshold=None) as conn:
         with conn.cursor() as cur:
             cur.execute("SELECT COUNT(*) FROM job_postings;")
             postings_count = int(cur.fetchone()[0])

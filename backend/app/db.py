@@ -6,9 +6,13 @@ from typing import Any
 import httpx
 import psycopg
 
+# psycopg3 prepares statements by default; Supabase PgBouncer (transaction
+# pooling) can reuse backends and raise DuplicatePreparedStatement.
+_PG_CONN_KWARGS: dict[str, Any] = {"prepare_threshold": None}
+
 
 def init_db(database_url: str) -> None:
-    with psycopg.connect(database_url) as conn:
+    with psycopg.connect(database_url, **_PG_CONN_KWARGS) as conn:
         with conn.cursor() as cur:
             cur.execute(
                 """
@@ -50,7 +54,7 @@ def init_db(database_url: str) -> None:
 def load_known_company_addresses(database_url: str) -> dict[str, str]:
     """Return a {company_name: address} map for companies with a known address."""
     out: dict[str, str] = {}
-    with psycopg.connect(database_url) as conn:
+    with psycopg.connect(database_url, **_PG_CONN_KWARGS) as conn:
         with conn.cursor() as cur:
             cur.execute(
                 """
@@ -71,7 +75,7 @@ def replace_job_postings(
     database_url: str,
     jobs: list[dict[str, Any]],
 ) -> None:
-    with psycopg.connect(database_url) as conn:
+    with psycopg.connect(database_url, **_PG_CONN_KWARGS) as conn:
         with conn.cursor() as cur:
             cur.execute("TRUNCATE TABLE job_postings;")
             for job in jobs:
@@ -120,7 +124,7 @@ def geocode_companies_missing_coords(
         print("[geo] MAP_API_KEY missing; skipping geocoding")
         return
 
-    with psycopg.connect(database_url) as conn:
+    with psycopg.connect(database_url, **_PG_CONN_KWARGS) as conn:
         with conn.cursor() as cur:
             cur.execute(
                 """
@@ -149,13 +153,15 @@ def geocode_companies_missing_coords(
                     if not address:
                         continue
 
+                    geo_who = f"{company_name}: " if company_name else ""
+
                     response = client.get(
                         "https://maps.googleapis.com/maps/api/geocode/json",
                         params={"address": address, "key": key},
                     )
                     if response.status_code != 200:
                         print(
-                            f"[geo] {company_name or company_id}: HTTP {response.status_code}; skipping"
+                            f"[geo] {geo_who}HTTP {response.status_code}; skipping"
                         )
                         continue
 
@@ -163,14 +169,14 @@ def geocode_companies_missing_coords(
                     status = str(payload.get("status") or "")
                     if status != "OK":
                         print(
-                            f"[geo] {company_name or company_id}: geocode status={status}; skipping"
+                            f"[geo] {geo_who}geocode status={status}; skipping"
                         )
                         continue
 
                     results = payload.get("results")
                     if not isinstance(results, list) or not results:
                         print(
-                            f"[geo] {company_name or company_id}: no geocode results; skipping"
+                            f"[geo] {geo_who}no geocode results; skipping"
                         )
                         continue
 
@@ -190,7 +196,7 @@ def geocode_companies_missing_coords(
                         lng, (int, float)
                     ):
                         print(
-                            f"[geo] {company_name or company_id}: invalid lat/lng; skipping"
+                            f"[geo] {geo_who}invalid lat/lng; skipping"
                         )
                         continue
 
@@ -211,7 +217,7 @@ def geocode_companies_missing_coords(
 
 
 def load_job_feed(database_url: str) -> dict[str, Any]:
-    with psycopg.connect(database_url) as conn:
+    with psycopg.connect(database_url, **_PG_CONN_KWARGS) as conn:
         with conn.cursor() as cur:
             cur.execute(
                 """
